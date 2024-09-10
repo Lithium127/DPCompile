@@ -1,0 +1,4 @@
+
+
+class DatapackException(Exception):
+    pass
