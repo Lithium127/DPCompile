@@ -71,7 +71,8 @@ class PackDirectory(object):
     
     def build(self) -> None:
         """Builds this directory and all sub-dirs"""
-        os.mkdir(self.path)
+        os.mkdir(self.path) # Replace with a recursive solution to allow for modules to contain more than one dir
+        # ex: test/(test2) - Module name
         for file in self._files:
             file.build()
     

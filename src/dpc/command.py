@@ -1,18 +1,24 @@
 
 import typing as t
+from types import SimpleNamespace
 
 if t.TYPE_CHECKING:
     from .scripts import Script
 
 from .types import (
     NBTData,
-    Target,
     ResourceLocation,
     UUID,
     BlockPosition,
-    WorldPosition
+    WorldPosition,
+    Swizzle,
+    Selector,
+    Biome
 )
 
+from .entities import Entity
+
+from .exception import CommandUsageException, CommandArgException
 
 class Command(object):
     """Represents a super-class for all command-like objects"""
@@ -53,21 +59,21 @@ class Advancement(Command):
     """Grants or revokes a selected advancement from target player"""
     
     action: t.Literal["grant", "revoke"]
-    target: Target
+    target: Entity
     condition: t.Literal["everything", "only", "from", "through", "until"]
     advancement: ResourceLocation | None
     criterion: str | None
     
     @t.overload
-    def __init__(self, action: t.Literal["grant", "revoke"], target: Target, condition: t.Literal["everything", "only", "from", "through", "until"]) -> None:
+    def __init__(self, action: t.Literal["grant", "revoke"], target: Entity, condition: t.Literal["everything", "only", "from", "through", "until"]) -> None:
         ...
     
     @t.overload
-    def __init__(self, action: t.Literal["grant", "revoke"], target: Target, condition: t.Literal["only", "from", "through", "until"], advancement: ResourceLocation) -> None:
+    def __init__(self, action: t.Literal["grant", "revoke"], target: Entity, condition: t.Literal["only", "from", "through", "until"], advancement: ResourceLocation) -> None:
         ...
     
     @t.overload
-    def __init__(self, action: t.Literal["grant", "revoke"], target: Target, condition: t.Literal["only"], advancement: ResourceLocation, criterion: str | None) -> None:
+    def __init__(self, action: t.Literal["grant", "revoke"], target: Entity, condition: t.Literal["only"], advancement: ResourceLocation, criterion: str | None) -> None:
         ...
     
     def __init__(self, action, target, condition, advancement = None, criterion = None) -> None:
@@ -75,7 +81,7 @@ class Advancement(Command):
 
         Args:
             action ("grant", "revoke"): Weather to grant or revoke the target advancement
-            target (Target): The target of the command
+            target (Entity): The target of the command
             condition (Literal): Where the command should stop
             advancement (ResourceLocation, optional): The location of the advancement. Used for some conditions.
             criterion (str, optional): What criteria the command is looking for, check the wiki for more details. Used for some conditions.
@@ -92,7 +98,7 @@ class Advancement(Command):
 class Attribute(Command):
     """Gets or modifies an attribute of target entity"""
     
-    target: Target
+    target: Entity
     attribute: ResourceLocation
     action: t.Literal[
         "get",
@@ -109,34 +115,34 @@ class Attribute(Command):
     operation: t.Literal["add", "multiply", "multiply_base"] | None
     
     @t.overload
-    def __init__(self, target: Target, attribute: ResourceLocation, action: t.Literal["get", "base get", "base set", "modifier add", "modifier revome", "modifier value get"]) -> None:
+    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["get", "base get", "base set", "modifier add", "modifier revome", "modifier value get"]) -> None:
         ...
     
     @t.overload
-    def __init__(self, target: Target, attribute: ResourceLocation, action: t.Literal["get", "base get"], scale: float) -> None:
+    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["get", "base get"], scale: float) -> None:
         ...
         
     @t.overload
-    def __init__(self, target: Target, attribute: ResourceLocation, action: t.Literal["base set"], value: float) -> None:
+    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["base set"], value: float) -> None:
         ...
     
     @t.overload
-    def __init__(self, target: Target, attribute: ResourceLocation, action: t.Literal["modifier add"], uuid: UUID, name: str, value: float, operation: t.Literal["add", "multiply", "multiply_base"]) -> None:
+    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["modifier add"], uuid: UUID, name: str, value: float, operation: t.Literal["add", "multiply", "multiply_base"]) -> None:
         ...
     
     @t.overload
-    def __init__(self, target: Target, attribute: ResourceLocation, action: t.Literal["modifier remove"], uuid: UUID) -> None:
+    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["modifier remove"], uuid: UUID) -> None:
         ...
         
     @t.overload
-    def __init__(self, target: Target, attribute: ResourceLocation, action: t.Literal["modifier value get"], uuid: UUID, scale: float) -> None:
+    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["modifier value get"], uuid: UUID, scale: float) -> None:
         ...
     
     def __init__(self, target, attribute, action, scale = None, uuid = None, name = None, value = None, operation = None) -> None:
         """Gets or modifies an attribute of target entity
 
         Args:
-            target (Target): The target entity or selector for this command
+            target (Entity): The target entity or selector for this command
             attribute (ResourceLocation): The attribute to modify
             action (Literal): Command action
             scale (float, optional): Scales the attribute. Used for some actions.
@@ -171,31 +177,30 @@ class Bossbar(Command):
         """
         raise NotImplementedError
 
-
 class Clear(Command):
     """Clears target item from player's inventory"""
     
-    target: Target
+    target: Entity
     item: str | None
     count: int | None
     
     @t.overload
-    def __init__(self, target: Target) -> None:
+    def __init__(self, target: Entity) -> None:
         ...
         
     @t.overload
-    def __init__(self, target: Target, item: str) -> None:
+    def __init__(self, target: Entity, item: str) -> None:
         ...
     
     @t.overload
-    def __init__(self, target: Target, item: str, count: int) -> None:
+    def __init__(self, target: Entity, item: str, count: int) -> None:
         ...
     
     def __init__(self, target, item = None, count = None) -> None:
         """Clears target item from player's inventory
 
         Args:
-            target (Target): The target player for the command
+            target (Entity): The target player for the command
             item (str, optional): The select item. Defaults to None.
             count (int, optional): How many of target item to remove from player. Defaults to None.
         """
@@ -296,7 +301,7 @@ class Clone(Command):
                 middle = f"filter {self.f_tag}"
             else:
                 middle = self.r_type
-            return f"{self.name} from {self.dimension} {self.start.cmd_str} {self.end.cmd_str} {self.position.cmd_str} {middle} {self.behavior}"
+            return f"clone from {self.dimension} {self.start.cmd_str} {self.end.cmd_str} {self.position.cmd_str} {middle} {self.behavior}"
     
     class To(Command):
         """Clones a set of blocks in the origin dimension to another dimension"""
@@ -341,7 +346,7 @@ class Clone(Command):
                 middle = f"filter {self.f_tag}"
             else:
                 middle = self.r_type
-            return f"{self.name} {self.start.cmd_str} {self.end.cmd_str} to {self.dimension} {self.position.cmd_str} {middle} {self.behavior}"
+            return f"clone {self.start.cmd_str} {self.end.cmd_str} to {self.dimension} {self.position.cmd_str} {middle} {self.behavior}"
     
     class FromTo(Command):
         """Clones a set of blocks from a selected dimension to another selected dimension, neither of which are dependent on the origin dimension for the command"""
@@ -389,7 +394,7 @@ class Clone(Command):
                 middle = f"filter {self.f_tag}"
             else:
                 middle = self.r_type
-            return f"{self.name} from {self.start_dim} {self.start.cmd_str} {self.end.cmd_str} to {self.end_dim} {self.position.cmd_str} {middle} {self.behavior}"
+            return f"clone from {self.start_dim} {self.start.cmd_str} {self.end.cmd_str} to {self.end_dim} {self.position.cmd_str} {middle} {self.behavior}"
 
 class Comment(Command):
     
@@ -402,34 +407,382 @@ class Comment(Command):
     def construct(self) -> str:
         return f"# {' '.join(self.content)}"
         
+class Damage(Command):
     
+    target: Entity
+    amount: int
+    dmg_type: str | None
+    by: Entity | None
+    dmg_from: str | None
+    
+    def __init__(self, target: Entity, amount: int, dmg_type: str | None) -> None:
+        self.target   = target
+        self.amount   = amount
+        self.dmg_type = dmg_type
+        self.by       = None
+        self.dmg_from = None
+    
+    @classmethod
+    def by_entity(cls, target: Entity, amount: int, entity: Entity, dmg_from: str) -> "Damage":
+        instance = cls(target, amount, None)
+        instance.by = entity
+        instance.dmg_from = dmg_from
+        return instance
 
+    def construct(self) -> str:
+        dmg_type = self.if_exists(self.dmg_type)
+        by       = self.if_exists(self.by)
+        dmg_from = self.if_exists(self.dmg_from)
+        return f"{self.name} {self.target} {self.amount}{dmg_type}{by}{dmg_from}"
+
+class Data(Command):
+    """Accesses and modifies data from blocks and entities,
+    Contains:
+        Data.Get()
+        Data.Merge()
+        Data.Modify()
+        Data.Remove()
+    """
+    
+    def __init__(self) -> None:
+        """Do not initilize Data class directly, instead use some command option
+        ex: Data.Get()
+
+        Raises:
+            CommandUsageException: Cannot invoke data directly
+        """
+        raise CommandUsageException("Cannot invoke Data Command directly, must use internal class")
+    
+    class Get(Command):
+        
+        target: t.Literal["block", "entity", "storage"]
+        location: BlockPosition | Entity
+        path: dict
+        scale: float | None
+        
+        @t.overload
+        def __init__(self, target: t.Literal["block", "entity", "storage"], location: BlockPosition | Entity, path: dict) -> None:
+            ...
+        
+        @t.overload
+        def __init__(self, target: t.Literal["block", "entity", "storage"], location: BlockPosition | Entity, path: dict, scale: float) -> None:
+            ...
+        
+        def __init__(self, target: t.Literal["block", "entity", "storage"], location: BlockPosition | Entity, path: dict | None = None, scale: float | None = None) -> None:
+            """Returns data about entity from target path
+
+            Args:
+                target (["block", "entity", "storage"]): The target type for this command
+                location (BlockPosition | Entity): Either a block position or an entity selector
+                path (dict, optional): Data path to location. Defaults to None.
+                scale (float, optional): How to scale the collected data. Defaults to None.
+
+            Raises:
+                CommandArgException: When an incorrect target type is provided for the location data
+            """
+            if isinstance(location, BlockPosition) and target != "block":
+                raise CommandArgException("Argument <target> must be equal to 'block' for argument <location> to be of type dcp.BlockPosition")
+            self.target = target
+            self.location = location
+            self.path = path
+            self.scale = scale
+        
+        def construct(self) -> str:
+            scale = self.if_exists(self.scale)
+            location = f"{self.location.x} {self.location.y} {self.location.z}" if isinstance(self.location, BlockPosition) else self.location
+            return f"data get {self.target} {location} {self.path}{scale}"
+    
+    class Merge(Command):
+        
+        target: Entity
+        nbt: NBTData
+        
+        def __init__(self, target: Entity, nbt: NBTData) -> None:
+            self.target = target
+            self.nbt = nbt
+        
+        def construct(self) -> str:
+            return f"data merge {self.target} {self.nbt}"
+    class Modify(Command):
+        
+        target: str
+        location: BlockPosition | Entity
+        nbt: NBTData
+        cmd_end: str
+        
+        def __init__(self, target: t.Literal["block", "entity", "storage"], location: BlockPosition | Entity, nbt: NBTData) -> None:
+            self.target = target
+            self.location = location
+            self.nbt = nbt
+        
+        def append(self, sort: t.Literal["from", "string"], target: t.Literal["block", "entity", "storage"], location: BlockPosition | Entity, path: NBTData, start: int | None = None, end: int | None = None) -> Command:
+            if isinstance(location, BlockPosition):
+                location = location.cmd_str
+            self.cmd_end = f"append {sort} {target} {location} {path}{self.if_exists(start)}{self.if_exists(end)}"
+            return self
+        
+        def append_value(self, value: t.Any) -> Command:
+            self.cmd_end = f"append value {value}"
+            return self
+        
+        def insert(self) -> Command:
+            ...
+        
+        def index(self) -> Command:
+            ...
+        
+        def merge(self) -> Command:
+            ...
+        
+        def prepend(self) -> Command:
+            ...
+            
+        def set(self) -> Command:
+            ...
+        
+        def construct(self) -> str:
+            return f"data modify {self.target} {self.location} {self.nbt} {self.cmd_end}"
+    class Remove(Command):
+        
+        target: Entity
+        nbt: NBTData
+        
+        def __init__(self, target: Entity, nbt: NBTData) -> None:
+            self.target = target
+            self.nbt = nbt
+        
+        def construct(self) -> str:
+            return f"data remove {self.target} {self.nbt}"
+    
 class Execute(Command):
     
-    def __init__(self, *conditionals: str) -> None:
-        pass
-    
+
     class Conditional:
-        ...
+        """Available Subclasses
+            Align
+            Anchored
+            At
+            As
+            Facing
+            If
+        """
+        def __init__(self, condition: str) -> None:
+            self.condition = condition
+        
+        def build(self) -> str:
+            return self.condition
     
     class Align(Conditional):
-        ...
         
-    class Anchored(Conditional):
-        ...
+        axis: Swizzle
+        
+        def __init__(self, axis: Swizzle | str) -> None:
+            """type <dpc.Execute.Conditional>
+            Execution position in the given axes are floored, changing by less than 1 block.
+            
+            Given (-1.8, 2.3, 5.9), [execute align xz] changes the position to (-2, 2.3, 5).
+
+            Args:
+                axis (Swizzle | str): The axis to floor
+            """
+            
+            if isinstance(axis, str):
+                axis = Swizzle([i for i in axis])
+            self.axis = axis
+        
+        def build(self) -> str:
+            return f"align {self.axis.value()}"
     
-    class At(Conditional):
-        ...
+    class Anchored(Conditional):
+        
+        anchor: t.Literal["eyes", "feet"]
+        
+        def __init__(self, anchor: t.Literal["eyes", "feet"] = "feet") -> None:
+            self.anchor = anchor
+        
         
     class As(Conditional):
-        ...
+        """Conditional statement"""
+        target: Entity
+        
+        def __init__(self, target: Entity | Selector | str) -> None:
+            """type <dpc.Execute.Conditional>
+            Executor is updated to target entity (which changes the meaning of @s).
+            Forks if <targets> or <origin: target> selects multiple entities.
+            Terminates if <targets> or <origin: target> fails to resolve to one or more valid entities (named players must be online).
+            
+            Kill all sheep: [execute as @e[type=sheep] run kill @s]
+            
+            Args:
+                target (Entity): The target entity
+            """
+            self.target = target
+        
+        def build(self) -> str:
+            return f"as {self.target}"
+        
+    class At(Conditional):
+        """Conditional statement"""
+        target: Entity
+        
+        def __init__(self, target: Entity | Selector | str) -> None:
+            """type <dpc.Execute.Conditional>
+            Execution position, rotation, and dimension are updated to match target entity.
+            Unparseable if the argument is not specified correctly.
+            Forks if <targets> or origin: target selects multiple entities.
+            Terminates if <targets> or origin: target fails to resolve to one or more valid entities (named players must be online).
+            
+            Tp all cheep up one block: [execute as @e[type=sheep] at @s run tp ~ ~1 ~]
+
+            Args:
+                target (Entity): Entity to execute at
+            """
+            self.target = target
+        
+        def build(self) -> str:
+            return f"at {self.target}"
     
     class Facing(Conditional):
-        ...
+        """Conditional statement"""
+        target: WorldPosition | Entity
+        anchor: t.Literal["eyes", "feet"]
+        
+        def __init__(self, target: WorldPosition | Entity, anchor: t.Literal["eyes", "feet"] = "feet") -> None:
+            """type <dpc.Execute.Conditional>
+            Execution rotation is updated to face given position or targets.
+            Unparseable if the argument is not specified correctly.
+            Forks if <targets> or origin: target selects multiple entities.
+            Terminates if <targets> or origin: target fails to resolve to one or more valid entities (named players must be online).
+
+            Args:
+                target (WorldPosition | Entity): Entity position or entity to face
+                anchor (["eyes", "feet"], optional): What point to look at, ignored if target is type <WorldPosition>. Defaults to "feet".
+            """
+            self.target = target
+            self.anchor = anchor
+        
+        def build(self) -> str:
+            return f"facing entity {self.target} {self.anchor}" if isinstance(self.target, Entity) else f"facing {self.target.cmd_str}"
     
     class If(Conditional):
+        """Conditional statement"""
+        
+        condition: str
+        
+        def __init__(self, condition: str) -> None:
+            self.condition = condition
+        
+        @classmethod
+        def biome(cls, pos: BlockPosition | list[int] | tuple[int, int, int], biome: Biome | str):
+            pos: BlockPosition = BlockPosition(pos[0], pos[1], pos[2]) if not isinstance(pos, BlockPosition) else pos
+            return cls(f"biome {biome if isinstance(biome, Biome) else Biome(biome)}")
+        
+        @classmethod
+        def block(cls, pos: BlockPosition | list[int] | tuple[int, int, int], block_type: str):
+            pos: BlockPosition = BlockPosition(pos[0], pos[1], pos[2]) if not isinstance(pos, BlockPosition) else pos
+            return cls(f"block {pos.cmd_str} {block_type}")
+        
+        @classmethod
+        def blocks(cls):
+            return 
+        
+        def build(self) -> str:
+            return f"if {self.condition}"
+    
+    class In(Conditional):
+        """Conditional statement"""
         ...
     
+    class On(Conditional):
+        """Conditional statement"""
+        ...
+    
+    class Positioned(Conditional):
+        """Conditional statement"""
+        ...
+    
+    class Rotated(Conditional):
+        """Conditional statement"""
+        ...
+    
+    class Store(Conditional):
+        """Conditional statement"""
+        ...
+    
+    # --< Normal Class Stuff >- -#
+    
+    _conditions = list[Conditional]
+    
+    def __init__(self, *conditions: Conditional) -> None:
+        self._conditions = [item for item in conditions]
+    
+    def construct(self) -> str:
+        return f"execute {' '.join([cond.build() for cond in self._conditions])}"
+    
+    def align(self, axis: Swizzle | str) -> t.Self:
+        """Execution position in the given axes are floored, changing by less than 1 block.
+        
+        Given (-1.8, 2.3, 5.9), [execute align xz] changes the position to (-2, 2.3, 5).
+
+        Args:
+            axis (Swizzle | str): The axis to floor
+        """
+        self._conditions.append(self.Align(axis))
+        return self
+    
+    def anchored(self, anchor: t.Literal["eyes", "feet"] = "feet") -> t.Self:
+        """Execution anchor is set to either the eyes or the feet.
+        Requires an entiry to be selected as the origin for the command
+        
+        [execute anchored eyes run tp ^ ^ ^] effectively teleports the executor's feet to where its eyes are.
+
+        Args:
+            anchor (["eyes", "feet"], optional): Where to anchor the execution. Defaults to "feet".
+        """
+    
+        self._conditions.append(self.Anchored(anchor))
+        return self
+    
+    def as_(self, target: Entity) -> t.Self:
+        """Executor is updated to target entity (which changes the meaning of @s).
+        Forks if <targets> or <origin: target> selects multiple entities.
+        Terminates if <targets> or <origin: target> fails to resolve to one or more valid entities (named players must be online).
+        
+        Kill all sheep: [execute as @e[type=sheep] run kill @s]
+        
+        Args:
+            target (Entity): The target entity
+        """
+        self._conditions.append(self.As(target))
+        return self
+
+    def at(self, target: Entity) -> t.Self:
+        """Execution position, rotation, and dimension are updated to match target entity.
+        Unparseable if the argument is not specified correctly.
+        Forks if <targets> or origin: target selects multiple entities.
+        Terminates if <targets> or origin: target fails to resolve to one or more valid entities (named players must be online).
+        
+        Tp all cheep up one block: [execute as @e[type=sheep] at @s run tp ~ ~1 ~]
+
+        Args:
+            target (Entity): Entity to execute at
+        """
+        self._conditions.append(self.At(target))
+        return self
+    
+    # Potential reason for overloads here, we only need the anchor if target is of type <Entity>
+    def facing(self, target: WorldPosition | Entity, anchor: t.Literal["eyes", "feet"] = "feet") -> t.Self:
+        """Execution rotation is updated to face given position or targets.
+        Unparseable if the argument is not specified correctly.
+        Forks if <targets> or origin: target selects multiple entities.
+        Terminates if <targets> or origin: target fails to resolve to one or more valid entities (named players must be online).
+
+        Args:
+            target (WorldPosition | Entity): Entity position or entity to face
+            anchor (["eyes", "feet"], optional): What point to look at, ignored if target is type <WorldPosition>. Defaults to "feet".
+        """
+        self._conditions.append(self.Facing(target, anchor))
+        return self
 
 
 # Clean Up Namespace

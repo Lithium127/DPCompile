@@ -7,7 +7,8 @@ from .types import (
     ResourceLocation,
     NBTData,
     UUID,
-    Target,
     BlockPosition,
     WorldPosition
 )
+
+from .entities import Entity, EntityData

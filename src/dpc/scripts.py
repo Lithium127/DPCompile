@@ -34,9 +34,12 @@ class Script(PackFile):
             
             content = "\n".join(content)
             
-            f.write(f"{'# This file was automatically generated for ' + self._pack._pack_name if aspect == 'x' else ''}\n{content}")
+            message = f"# This file was automatically generated for {self._pack._pack_name} using DPCompile #\n# <=-=-=-=-=-=>" if aspect == "x" else ""
+            
+            f.write(f"{message}\n{content}")
 
 class Module(PackDirectory):
+    
     
     def __init__(self, name: str, pack: object) -> None:
         super().__init__(name)

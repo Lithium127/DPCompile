@@ -10,6 +10,8 @@ from .shared import DirectoryFlags, PackFile
 
 from .scripts import Module, Script
 from .command import Command
+
+from . import constants as const
 class Datapack:
     """Represents a de-compiled datapack"""
     
@@ -88,7 +90,7 @@ class Datapack:
         with open(os.path.join(self._target_path, self._pack_name, "pack.mcmeta"), "x") as f:
             json.dump({
                 "pack": {
-                    "pack_format": 10,
+                    "pack_format": const._PACK_VERSION_REFERENCE[self.version],
                     "description": self._description
                 }
             }, f, indent = 4)

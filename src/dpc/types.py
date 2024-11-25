@@ -2,23 +2,14 @@ import typing as t
 import os
 
 NBTData = t.Union[dict]
-Target = t.Union[
-    str, 
-    'Player',
-    t.Literal[
-        "@a",
-        "@e",
-        "@p",
-        "@r",
-        "@s",
-    ]
-]
+
+Selector = t.Literal["@a", "@e", "@p", "@r", "@s"]
+
 ResourceLocation = t.Union[str, os.PathLike]
 BlockTarget = t.Union[
     "BlockPosition",
     tuple[int, int, int],
     list[int],
-    
 ]
 
 class WorldPosition:
@@ -28,11 +19,23 @@ class WorldPosition:
 class BlockPosition:
     
     _position: tuple[int, int, int]
-    _relative: bool
+    _relative: t.Literal["world", "entity", "rotation"]
     
-    def __init__(self, x: int, y: int, z: int, relative: bool = False) -> None:
+    def __init__(self, x: int, y: int, z: int, relative: t.Literal["world", "entity", "rotation"] = "world") -> None:
+        """Represents a position of a block in the world, can be relative to
+        the world, an entity ('~') or an entity rotation ('^')
+
+        Args:
+            x (int): Block X position
+            y (int): Block Y position
+            z (int): Block Z position
+            relative (["world", "entity", "rotation"], optional): What this position is relative to. Defaults to "world".
+        """
         self._position = (x, y, z)
         self._relative = relative
+        
+    def __str__(self) -> str:
+        return f"<BlockPosition ({self.x}, {self.y}, {self.z})>"
     
     def __add__(self, value: 'BlockPosition') -> None:
         self._position = (self.x + value.x, self.y + value.y, self.z + value.z)
@@ -65,8 +68,18 @@ class BlockPosition:
         self._position = (self.x, self.y, self.z + value)
     
     @property
+    def is_absolute(self) -> bool:
+        """True when this position is relative to the world"""
+        return (self._relative == "world")
+    
+    @property
     def cmd_str(self) -> str:
-        return f"{'~' if self._relative else ''}{self.x} {'~' if self._relative else ''}{self.y} {'~' if self._relative else ''}{self.z}"
+        relative = {
+            "world" : '',
+            "entity" : '~',
+            "rotation" : '^'
+        }[self._relative]
+        return f"{relative}{self.x} {relative}{self.y} {relative}{self.z}"
 
 class UUID:
     
@@ -78,6 +91,32 @@ class UUID:
     def __str__(self) -> str:
         return self._value
 
+class Swizzle:
+    
+    x: bool
+    y: bool
+    z: bool
+    
+    def __init__(self, dir: list[t.Literal["x","y","z"]]) -> None:
+        self.x = "x" in dir
+        self.y = "y" in dir
+        self.z = "z" in dir
+    
+    def __call__(self) -> str:
+        return self.value()
+    
+    def value(self) -> str:
+        return f"{'x' if self.x else ''}{'y' if self.y else ''}{'z' if self.z else ''}"
 
-class Player:
-    pass
+class Biome:
+    
+    name: str
+    namespace: str
+    
+    def __init__(self, name: str) -> None:
+        name = name.split(":")
+        self.name = name[0] if len(name) == 1 else name[2]
+        self.namespace = name[0] if len(name) == 2 else "minecraft"
+    
+    def __str__(self) -> str:
+        return f"{self.namespace}:{self.name}"
