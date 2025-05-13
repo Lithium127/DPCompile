@@ -1,789 +1,238 @@
-
+"""
+The module that holds all command classes, enabling minimal code and
+checking errors at build time.
+"""
+from __future__ import annotations
 import typing as t
-from types import SimpleNamespace
+
+from abc import ABC, abstractmethod
+
+from .datatypes import Version, TextElement
+from .datatypes import to_textelement
 
 if t.TYPE_CHECKING:
-    from .scripts import Script
+    from .IO.script import ScriptContext, Script
 
-from .types import (
-    NBTData,
-    ResourceLocation,
-    UUID,
-    BlockPosition,
-    WorldPosition,
-    Swizzle,
-    Selector,
-    Biome
-)
+class CommandError(Exception):
+    """Represents an error occurring within a command"""
+    pass
 
-from .entities import Entity
-
-from .exception import CommandUsageException, CommandArgException
-
-class Command(object):
-    """Represents a super-class for all command-like objects"""
+class BaseCommand(ABC):
+    """The base class for all commands.
     
-    line_number: int
-    script: 'Script'
-
-    def __init_subclass__(cls) -> None:
-        pass
+    All commands must override the `build()`
+    method to return the rendered content of
+    the command in a way that can be interpreted
+    by the `.mcfunction` filetype, this method
+    is called by a script within the `render()`
+    method which is used to directly attach the
+    content from the command to a script context
+    for writing."""
     
-    def construct(self) -> str:
-        """Builds the command at runtime to allow for relative paths to be decided before reference
+    _CURRENT_CONTEXT: ScriptContext | None = None
+    
+    _VERSION_RANGE: tuple[Version, Version]
+    
+    is_dev: bool
+    
+    def __init__(self, register: bool = True, dev: bool = False) -> None:
+        """Initializes a command, registering it to a context
+        if one is available and the register flag is true
+
+        Args:
+            register (bool, optional): If this command should be registered. Defaults to True.
+        """
+        # All commands are not dev-only unless otherwise stated
+        self.is_dev = dev
+        
+        if BaseCommand._CURRENT_CONTEXT is not None and register:
+            if BaseCommand._CURRENT_CONTEXT.script.pack._build_dev or (not self.is_dev):
+                BaseCommand._CURRENT_CONTEXT.add_cmd(self)
+    
+    def __init_subclass__(cls, min_version: Version | None = None, max_version: Version | None = None):
+        cls._VERSION_RANGE = (min_version or Version.min(), max_version or Version.max())
+        return super().__init_subclass__()
+    
+    @abstractmethod
+    def build(self) -> str:
+        """build the content of this command as a single
+        string without line breaks. The usage dictates that
+        the string returned by this be interpretable by the
+        .mcfunction filetype.
+        
+        > This function can be run multiple times, meaning it should
+        not directly modify any attributes of classes in an additive
+        manner, preferably at all.
 
         Returns:
-            str: The fully constructed command
+            str: The string this instance represents
         """
-        return "# Empty Line"
-    
-    def update_data(self, line_number: int, script: 'Script') -> None:
-        """Updates internal data for the command so that it can referece the fine it is contained within
-
-        Args:
-            line_number (int): _description_
-            filename (str): _description_
-        """
-        self.script = script
-        self.line_number = line_number
-    
-    def if_exists(self, attr: t.Any) -> str:
-        return f" {attr}" if attr else ''
-    
-    @property
-    def name(self) -> str:
-        return self.__class__.__name__.lower()
-
-
-class Advancement(Command):
-    """Grants or revokes a selected advancement from target player"""
-    
-    action: t.Literal["grant", "revoke"]
-    target: Entity
-    condition: t.Literal["everything", "only", "from", "through", "until"]
-    advancement: ResourceLocation | None
-    criterion: str | None
-    
-    @t.overload
-    def __init__(self, action: t.Literal["grant", "revoke"], target: Entity, condition: t.Literal["everything", "only", "from", "through", "until"]) -> None:
-        ...
-    
-    @t.overload
-    def __init__(self, action: t.Literal["grant", "revoke"], target: Entity, condition: t.Literal["only", "from", "through", "until"], advancement: ResourceLocation) -> None:
-        ...
-    
-    @t.overload
-    def __init__(self, action: t.Literal["grant", "revoke"], target: Entity, condition: t.Literal["only"], advancement: ResourceLocation, criterion: str | None) -> None:
-        ...
-    
-    def __init__(self, action, target, condition, advancement = None, criterion = None) -> None:
-        """Grants or revokes an selected advancement from target player
-
-        Args:
-            action ("grant", "revoke"): Weather to grant or revoke the target advancement
-            target (Entity): The target of the command
-            condition (Literal): Where the command should stop
-            advancement (ResourceLocation, optional): The location of the advancement. Used for some conditions.
-            criterion (str, optional): What criteria the command is looking for, check the wiki for more details. Used for some conditions.
-        """
-        self.action = action
-        self.target = target
-        self.condition = condition
-        self.advancement = advancement
-        self.criterion = criterion
-
-    def construct(self) -> str:
-        return f"{self.name} {self.action} {self.target} {self.condition}{' ' + self.advancement if self.advancement else ''}{' ' + self.criterion if self.criterion else ''}"
-
-class Attribute(Command):
-    """Gets or modifies an attribute of target entity"""
-    
-    target: Entity
-    attribute: ResourceLocation
-    action: t.Literal[
-        "get",
-        "base get",
-        "base set",
-        "modifier add",
-        "modifier revome",
-        "modifier value get"
-    ]
-    scale: float | None
-    uuid: UUID | None
-    attr_name: str | None
-    value: float | None
-    operation: t.Literal["add", "multiply", "multiply_base"] | None
-    
-    @t.overload
-    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["get", "base get", "base set", "modifier add", "modifier revome", "modifier value get"]) -> None:
-        ...
-    
-    @t.overload
-    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["get", "base get"], scale: float) -> None:
-        ...
-        
-    @t.overload
-    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["base set"], value: float) -> None:
-        ...
-    
-    @t.overload
-    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["modifier add"], uuid: UUID, name: str, value: float, operation: t.Literal["add", "multiply", "multiply_base"]) -> None:
-        ...
-    
-    @t.overload
-    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["modifier remove"], uuid: UUID) -> None:
-        ...
-        
-    @t.overload
-    def __init__(self, target: Entity, attribute: ResourceLocation, action: t.Literal["modifier value get"], uuid: UUID, scale: float) -> None:
-        ...
-    
-    def __init__(self, target, attribute, action, scale = None, uuid = None, name = None, value = None, operation = None) -> None:
-        """Gets or modifies an attribute of target entity
-
-        Args:
-            target (Entity): The target entity or selector for this command
-            attribute (ResourceLocation): The attribute to modify
-            action (Literal): Command action
-            scale (float, optional): Scales the attribute. Used for some actions.
-            uuid (UUID, optional): The UUID of a selected attribute, check the wiki for more informaiton. Used for some actions.
-            name (str, optional): The name of the attribute. Used for some actions.
-            value (float, optional): The value to give the attribute. Used for some actions.
-        """
-        self.target = target
-        self.attribute = attribute
-        self.action = action
-        self.scale = scale
-        self.uuid = uuid
-        self.attr_name = name
-        self.value = value
-        self.operation = operation
-    
-    def construct(self) -> str:
-        scale = f" {self.scale}" if self.scale else ''
-        uuid  = f" {self.uuid}" if self.uuid else ''
-        name  = f" {self.attr_name}" if self.attr_name else ''
-        value = f" {self.value}" if self.value else ''
-        operation = f" {self.operation}" if self.operation else ''
-        return f"{self.name} {self.target} {self.attribute} {self.action}{scale}{uuid}{name}{value}{operation}"
-
-class Bossbar(Command):
-    
-    def __init__(self) -> None:
-        """Not implemented
-
-        Raises:
-            NotImplementedError: _description_
-        """
-        raise NotImplementedError
-
-class Clear(Command):
-    """Clears target item from player's inventory"""
-    
-    target: Entity
-    item: str | None
-    count: int | None
-    
-    @t.overload
-    def __init__(self, target: Entity) -> None:
-        ...
-        
-    @t.overload
-    def __init__(self, target: Entity, item: str) -> None:
-        ...
-    
-    @t.overload
-    def __init__(self, target: Entity, item: str, count: int) -> None:
-        ...
-    
-    def __init__(self, target, item = None, count = None) -> None:
-        """Clears target item from player's inventory
-
-        Args:
-            target (Entity): The target player for the command
-            item (str, optional): The select item. Defaults to None.
-            count (int, optional): How many of target item to remove from player. Defaults to None.
-        """
-        self.target = target
-        self.item = item
-        self.count = count
-    
-    def construct(self) -> str:
-        item = self.if_exists(self.item)
-        count = self.if_exists(self.count)
-        return f"{self.name} {self.target}{item}{count}"
-
-class Clone(Command):
-    """Clones a set of blocks from one location in the world to another. 
-        For cross-dimensional cloning, check Clone.From() or Clone.To()"""
-    start: BlockPosition
-    end: BlockPosition
-    position: BlockPosition
-    r_type: t.Literal["replace", "masked"]
-    behavior: t.Literal["force", "move", "normal"]
-    f_tag: str | None
-    
-    @t.overload
-    def __init__(self, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], position: BlockPosition | tuple[int, int, int] | list[int]) -> None:
-        ...
-    
-    @t.overload
-    def __init__(self, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], position: BlockPosition | tuple[int, int, int] | list[int], r_type: t.Literal["replace", "masked"], behavior: t.Literal["force", "move", "normal"], filter: str) -> None:
-        ...
-    
-    def __init__(self, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], position: BlockPosition | tuple[int, int, int] | list[int], r_type: str = "replace", behavior: str = "normal", filter: str | None = None) -> None:
-        """Clones a set of blocks from one location in the world to another. 
-        For cross-dimensional cloning, check Clone.From() or Clone.To()
-
-        Args:
-            start (BlockPosition | tuple[int, int, int] | list[int]): The position of the first corner of bounding-box
-            end (BlockPosition | tuple[int, int, int] | list[int]): The end position of the bounding box
-            position (BlockPosition | tuple[int, int, int] | list[int]): The location to clone to
-            r_type (str, optional): The replace type. Defaults to "replace".
-            behavior (str, optional): How the command should act. Defaults to "normal".
-            filter (str | None, optional): The selected block filter, will override r_type. Defaults to None.
-        """
-        self.start    = start    if  isinstance(start, BlockPosition)   else BlockPosition(start[0], start[1], start[2])
-        self.end      = end      if   isinstance(end, BlockPosition)    else BlockPosition(end[0], end[1], end[2])
-        self.position = position if isinstance(position, BlockPosition) else BlockPosition(position[0], position[1], position[2])
-        self.r_type   = r_type
-        self.behavior = behavior
-        self.f_tag    = filter
-    
-    def construct(self) -> str:
-        if self.f_tag:
-            middle = f"filter {self.f_tag}"
-        else:
-            middle = self.r_type
-        return f"{self.name} {self.start.cmd_str} {self.end.cmd_str} {self.position.cmd_str} {middle} {self.behavior}"
-    
-    class From(Command):
-        """Clones a set of blocks across dimensions from a set dimensions"""
-        
-        dimension: str
-        start: BlockPosition
-        end: BlockPosition
-        position: BlockPosition
-        r_type: t.Literal["replace", "masked"]
-        behavior: t.Literal["force", "move", "normal"]
-        f_tag: str | None
-        
-        @t.overload
-        def __init__(self, dimension: str, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], position: BlockPosition | tuple[int, int, int] | list[int]) -> None:
-            ...
-        
-        @t.overload
-        def __init__(self, dimension: str, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], position: BlockPosition | tuple[int, int, int] | list[int], r_type: t.Literal["replace", "masked"], behavior: t.Literal["force", "move", "normal"], filter: str) -> None:
-            ...
-            
-        def __init__(self, dimension: str, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], position: BlockPosition | tuple[int, int, int] | list[int], r_type: str = "replace", behavior: str = "normal", filter: str | None = None) -> None:
-            """Clones a set of blocks across dimensions
-
-            Args:
-                dimension (str): The target dimension to clone from
-                start (BlockPosition | tuple[int, int, int] | list[int]): The position of the first corner of bounding-box
-                end (BlockPosition | tuple[int, int, int] | list[int]): The end position of the bounding box
-                position (BlockPosition | tuple[int, int, int] | list[int]): The location to clone to
-                r_type (str, optional): The replace type. Defaults to "replace".
-                behavior (str, optional): How the command should act. Defaults to "normal".
-                filter (str | None, optional): The selected block filter, will override r_type. Defaults to None.
-            """
-            self.dimension = dimension
-            self.start    = start    if  isinstance(start, BlockPosition)   else BlockPosition(start[0], start[1], start[2])
-            self.end      = end      if   isinstance(end, BlockPosition)    else BlockPosition(end[0], end[1], end[2])
-            self.position = position if isinstance(position, BlockPosition) else BlockPosition(position[0], position[1], position[2])
-            self.r_type   = r_type
-            self.behavior = behavior
-            self.f_tag    = filter
-        
-        def construct(self) -> str:
-            if self.f_tag:
-                middle = f"filter {self.f_tag}"
-            else:
-                middle = self.r_type
-            return f"clone from {self.dimension} {self.start.cmd_str} {self.end.cmd_str} {self.position.cmd_str} {middle} {self.behavior}"
-    
-    class To(Command):
-        """Clones a set of blocks in the origin dimension to another dimension"""
-        dimension: str
-        start: BlockPosition
-        end: BlockPosition
-        position: BlockPosition
-        r_type: t.Literal["replace", "masked"]
-        behavior: t.Literal["force", "move", "normal"]
-        f_tag: str | None
-        
-        @t.overload
-        def __init__(self, dimension: str, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], position: BlockPosition | tuple[int, int, int] | list[int]) -> None:
-            ...
-        
-        @t.overload
-        def __init__(self, dimension: str, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], position: BlockPosition | tuple[int, int, int] | list[int], r_type: t.Literal["replace", "masked"], behavior: t.Literal["force", "move", "normal"], filter: str) -> None:
-            ...
-            
-        def __init__(self, dimension: str, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], position: BlockPosition | tuple[int, int, int] | list[int], r_type: str = "replace", behavior: str = "normal", filter: str | None = None) -> None:
-            """Clones a set of blocks in the origin dimension to another dimension
-
-            Args:
-                dimension (str): The target dimension to clone to
-                start (BlockPosition | tuple[int, int, int] | list[int]): The position of the first corner of bounding-box
-                end (BlockPosition | tuple[int, int, int] | list[int]): The end position of the bounding box
-                position (BlockPosition | tuple[int, int, int] | list[int]): The location to clone to
-                r_type (str, optional): The replace type. Defaults to "replace".
-                behavior (str, optional): How the command should act. Defaults to "normal".
-                filter (str | None, optional): The selected block filter, will override r_type. Defaults to None.
-            """
-            self.dimension = dimension
-            self.start    = start    if  isinstance(start, BlockPosition)   else BlockPosition(start[0], start[1], start[2])
-            self.end      = end      if   isinstance(end, BlockPosition)    else BlockPosition(end[0], end[1], end[2])
-            self.position = position if isinstance(position, BlockPosition) else BlockPosition(position[0], position[1], position[2])
-            self.r_type   = r_type
-            self.behavior = behavior
-            self.f_tag    = filter
-        
-        def construct(self) -> str:
-            if self.f_tag:
-                middle = f"filter {self.f_tag}"
-            else:
-                middle = self.r_type
-            return f"clone {self.start.cmd_str} {self.end.cmd_str} to {self.dimension} {self.position.cmd_str} {middle} {self.behavior}"
-    
-    class FromTo(Command):
-        """Clones a set of blocks from a selected dimension to another selected dimension, neither of which are dependent on the origin dimension for the command"""
-        start_dim: str
-        end_dim: str
-        start: BlockPosition
-        end: BlockPosition
-        position: BlockPosition
-        r_type: t.Literal["replace", "masked"]
-        behavior: t.Literal["force", "move", "normal"]
-        f_tag: str | None
-        
-        @t.overload
-        def __init__(self, start_dim: str, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], end_dim: str, position: BlockPosition | tuple[int, int, int] | list[int]) -> None:
-            ...
-        
-        @t.overload
-        def __init__(self, start_dim: str, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], end_dim: str, position: BlockPosition | tuple[int, int, int] | list[int], r_type: t.Literal["replace", "masked"], behavior: t.Literal["force", "move", "normal"], filter: str) -> None:
-            ...
-        
-        def __init__(self, start_dim: str, start: BlockPosition | tuple[int, int, int] | list[int], end: BlockPosition | tuple[int, int, int] | list[int], end_dim: str, position: BlockPosition | tuple[int, int, int] | list[int], r_type: str = "replace", behavior: str = "normal", filter: str | None = None) -> None:
-            """Clones a set of blocks from a selected dimension to another selected dimension, neither of which are dependent on the origin dimension for the command
-
-            Args:
-                start_dim (str): _description_
-                start (BlockPosition | tuple[int, int, int] | list[int]): _description_
-                end (BlockPosition | tuple[int, int, int] | list[int]): _description_
-                end_dim (str): _description_
-                position (BlockPosition | tuple[int, int, int] | list[int]): _description_
-                r_type (str, optional): _description_. Defaults to "replace".
-                behavior (str, optional): _description_. Defaults to "normal".
-                filter (str | None, optional): _description_. Defaults to None.
-            """
-            self.start_dim = start_dim
-            self.end_dim   = end_dim
-            self.start     = start    if  isinstance(start, BlockPosition)   else BlockPosition(start[0], start[1], start[2])
-            self.end       = end      if   isinstance(end, BlockPosition)    else BlockPosition(end[0], end[1], end[2])
-            self.position  = position if isinstance(position, BlockPosition) else BlockPosition(position[0], position[1], position[2])
-            self.r_type    = r_type
-            self.behavior  = behavior
-            self.f_tag     = filter
-        
-        def construct(self) -> str:
-            if self.f_tag:
-                middle = f"filter {self.f_tag}"
-            else:
-                middle = self.r_type
-            return f"clone from {self.start_dim} {self.start.cmd_str} {self.end.cmd_str} to {self.end_dim} {self.position.cmd_str} {middle} {self.behavior}"
-
-class Comment(Command):
-    
-    content: tuple[str]
-    
-    def __init__(self, *content: str) -> None:
-        """Adds a comment to the script"""
-        self.content = content
-
-    def construct(self) -> str:
-        return f"# {' '.join(self.content)}"
-        
-class Damage(Command):
-    
-    target: Entity
-    amount: int
-    dmg_type: str | None
-    by: Entity | None
-    dmg_from: str | None
-    
-    def __init__(self, target: Entity, amount: int, dmg_type: str | None) -> None:
-        self.target   = target
-        self.amount   = amount
-        self.dmg_type = dmg_type
-        self.by       = None
-        self.dmg_from = None
+        pass
     
     @classmethod
-    def by_entity(cls, target: Entity, amount: int, entity: Entity, dmg_from: str) -> "Damage":
-        instance = cls(target, amount, None)
-        instance.by = entity
-        instance.dmg_from = dmg_from
+    def validate(cls: BaseCommand, cmdstr: str) -> bool:
+        """An optionally overriden method that determines if
+        a given string command is a valid string for this
+        command instance. Usually checks each value of the
+        command string or literal to validate.
+
+        Args:
+            cmdstr (str): The literal string to validate
+
+        Returns:
+            bool: If the passed literal matches required 
+                    argument positions for this command
+        """
+        return True
+    
+    @classmethod
+    def _set_context(cls, ctx: ScriptContext) -> None:
+        """Sets the reference to the current available 
+        script context for all commands.
+        
+        This context must be writable, as all commands
+        that are rendered while the context is set have
+        their content directly appended to the script
+        context.
+
+        Args:
+            ctx (ScriptContext): The script context
+        """
+        BaseCommand._CURRENT_CONTEXT = ctx
+    
+    @classmethod
+    def _pop_context(cls) -> None:
+        """Removes the reference to the script context"""
+        BaseCommand._CURRENT_CONTEXT = None
+
+class BaseCommandContext(ABC):
+    
+    @abstractmethod
+    def __enter__(self) -> BaseCommandContext:
+        pass
+    
+    @abstractmethod
+    def __exit__(self, exc_type, exc, tb) -> bool:
+        pass
+
+class Command(BaseCommand):
+    """A literal command without structure, appending
+    its content directly to a script."""
+    
+    content: str
+    
+    def __init__(self, content: str, **kwargs):
+        """A literal command without structure, returns
+        the base string passed to the command when built.
+        
+        ```python
+        cmd = Command("This is a test command")
+        cmd.build() # > str('This is a test command')
+        ```
+
+        Args:
+            content (str): The content of the command
+        """
+        super().__init__(**kwargs)
+        self.content = content
+    
+    def build(self):
+        return self.content
+
+class Comment(BaseCommand):
+    """A comment within a script, for developer notes"""
+    
+    content: str
+    
+    def __init__(self, content: str, **kwargs):
+        super().__init__(**kwargs)
+        self.content = content
+    
+    def build(self):
+        if "\n" in self.content:
+            return "\n".join([f"# {line}" for line in self.content.split("\n")])
+        return f"# {self.content}"
+
+
+
+class Log(BaseCommand):
+    """Shorthand say command with script detection and warning levels for development.
+    automatically flagged as developmet to avoid."""
+    
+    _COLOR_MAPPING = {
+        'info' : TextElement.Colors.WHITE,
+        'warning' : TextElement.Colors.YELLOW,
+        'critical' : TextElement.Colors.RED
+    }
+    
+    _script: Script | None
+    msg: str
+    level: str
+    
+    def __init__(self, msg: str, level: t.Literal["info", "warning", "critical"] = "info", **kwargs):
+        """Creates a development only log message. Shorthand for the Say command
+        but identifies the script is is created within and automatically marks
+        itself as development only, making it safe to run within the script environment
+        as it gets masked out when the production environ is run.
+
+        Args:
+            msg (str): The message to log, this message will be displayed to the text chat when
+                        its parent script is run, and the message will include the log level and
+                        the name of the script that parents it if a script could be found.
+            level (Literal[info, warning, critical], optional): The level for this log instance.
+                        Can be info, warning, or critical. Note that these logs are hard-coded
+                        within the pack and cannot be conditionally run without use of an execute
+                        command. Defaults to "info".
+        """
+        super().__init__(dev = True, **kwargs)
+        
+        self.msg = msg
+        self.level = level
+        self._script = None
+        if BaseCommand._CURRENT_CONTEXT is not None:
+            self._script = BaseCommand._CURRENT_CONTEXT.script
+    
+    @classmethod
+    def info(cls, msg: str, **kwargs) -> Log:
+        """Creates a log command with the level of info"""
+        instance = cls.__new__(cls)
+        instance.__init__(msg, level='info', **kwargs)
         return instance
 
-    def construct(self) -> str:
-        dmg_type = self.if_exists(self.dmg_type)
-        by       = self.if_exists(self.by)
-        dmg_from = self.if_exists(self.dmg_from)
-        return f"{self.name} {self.target} {self.amount}{dmg_type}{by}{dmg_from}"
+    @classmethod
+    def warn(cls, msg: str, **kwargs) -> Log:
+        """Creates a log command with the level of info"""
+        instance = cls.__new__(cls)
+        instance.__init__(msg, level='warning', **kwargs)
+        return instance
+    
+    @classmethod
+    def crit(cls, msg: str, **kwargs) -> Log:
+        instance = cls.__new__(cls)
+        instance.__init__(msg, level='critical', **kwargs)
+        return instance
+    
+    def build(self):
+        # TODO: Replace selector with entity selector enum
+        instance = TextElement(
+            f"[{self._script.name or 'N/A'} | {self.level}] - {self.msg}", 
+            color = Log._COLOR_MAPPING.get(self.level, TextElement.Colors.WHITE)
+        )
+        return f"tellraw @a {instance.to_command_str()}"
 
-class Data(Command):
-    """Accesses and modifies data from blocks and entities,
-    Contains:
-        Data.Get()
-        Data.Merge()
-        Data.Modify()
-        Data.Remove()
-    """
-    
-    def __init__(self) -> None:
-        """Do not initilize Data class directly, instead use some command option
-        ex: Data.Get()
 
-        Raises:
-            CommandUsageException: Cannot invoke data directly
-        """
-        raise CommandUsageException("Cannot invoke Data Command directly, must use internal class")
-    
-    class Get(Command):
-        
-        target: t.Literal["block", "entity", "storage"]
-        location: BlockPosition | Entity
-        path: dict
-        scale: float | None
-        
-        @t.overload
-        def __init__(self, target: t.Literal["block", "entity", "storage"], location: BlockPosition | Entity, path: dict) -> None:
-            ...
-        
-        @t.overload
-        def __init__(self, target: t.Literal["block", "entity", "storage"], location: BlockPosition | Entity, path: dict, scale: float) -> None:
-            ...
-        
-        def __init__(self, target: t.Literal["block", "entity", "storage"], location: BlockPosition | Entity, path: dict | None = None, scale: float | None = None) -> None:
-            """Returns data about entity from target path
 
-            Args:
-                target (["block", "entity", "storage"]): The target type for this command
-                location (BlockPosition | Entity): Either a block position or an entity selector
-                path (dict, optional): Data path to location. Defaults to None.
-                scale (float, optional): How to scale the collected data. Defaults to None.
-
-            Raises:
-                CommandArgException: When an incorrect target type is provided for the location data
-            """
-            if isinstance(location, BlockPosition) and target != "block":
-                raise CommandArgException("Argument <target> must be equal to 'block' for argument <location> to be of type dcp.BlockPosition")
-            self.target = target
-            self.location = location
-            self.path = path
-            self.scale = scale
-        
-        def construct(self) -> str:
-            scale = self.if_exists(self.scale)
-            location = f"{self.location.x} {self.location.y} {self.location.z}" if isinstance(self.location, BlockPosition) else self.location
-            return f"data get {self.target} {location} {self.path}{scale}"
+class WrapComment(BaseCommandContext):
     
-    class Merge(Command):
-        
-        target: Entity
-        nbt: NBTData
-        
-        def __init__(self, target: Entity, nbt: NBTData) -> None:
-            self.target = target
-            self.nbt = nbt
-        
-        def construct(self) -> str:
-            return f"data merge {self.target} {self.nbt}"
-    class Modify(Command):
-        
-        target: str
-        location: BlockPosition | Entity
-        nbt: NBTData
-        cmd_end: str
-        
-        def __init__(self, target: t.Literal["block", "entity", "storage"], location: BlockPosition | Entity, nbt: NBTData) -> None:
-            self.target = target
-            self.location = location
-            self.nbt = nbt
-        
-        def append(self, sort: t.Literal["from", "string"], target: t.Literal["block", "entity", "storage"], location: BlockPosition | Entity, path: NBTData, start: int | None = None, end: int | None = None) -> Command:
-            if isinstance(location, BlockPosition):
-                location = location.cmd_str
-            self.cmd_end = f"append {sort} {target} {location} {path}{self.if_exists(start)}{self.if_exists(end)}"
-            return self
-        
-        def append_value(self, value: t.Any) -> Command:
-            self.cmd_end = f"append value {value}"
-            return self
-        
-        def insert(self) -> Command:
-            ...
-        
-        def index(self) -> Command:
-            ...
-        
-        def merge(self) -> Command:
-            ...
-        
-        def prepend(self) -> Command:
-            ...
-            
-        def set(self) -> Command:
-            ...
-        
-        def construct(self) -> str:
-            return f"data modify {self.target} {self.location} {self.nbt} {self.cmd_end}"
-    class Remove(Command):
-        
-        target: Entity
-        nbt: NBTData
-        
-        def __init__(self, target: Entity, nbt: NBTData) -> None:
-            self.target = target
-            self.nbt = nbt
-        
-        def construct(self) -> str:
-            return f"data remove {self.target} {self.nbt}"
+    content: tuple[str, str]
     
-class Execute(Command):
-    
-
-    class Conditional:
-        """Available Subclasses
-            Align
-            Anchored
-            At
-            As
-            Facing
-            If
-        """
-        def __init__(self, condition: str) -> None:
-            self.condition = condition
+    def __init__(self, start: str, end: str):
+        self.content = (start, end)
         
-        def build(self) -> str:
-            return self.condition
-    
-    class Align(Conditional):
-        
-        axis: Swizzle
-        
-        def __init__(self, axis: Swizzle | str) -> None:
-            """type <dpc.Execute.Conditional>
-            Execution position in the given axes are floored, changing by less than 1 block.
-            
-            Given (-1.8, 2.3, 5.9), [execute align xz] changes the position to (-2, 2.3, 5).
-
-            Args:
-                axis (Swizzle | str): The axis to floor
-            """
-            
-            if isinstance(axis, str):
-                axis = Swizzle([i for i in axis])
-            self.axis = axis
-        
-        def build(self) -> str:
-            return f"align {self.axis.value()}"
-    
-    class Anchored(Conditional):
-        
-        anchor: t.Literal["eyes", "feet"]
-        
-        def __init__(self, anchor: t.Literal["eyes", "feet"] = "feet") -> None:
-            self.anchor = anchor
-        
-        
-    class As(Conditional):
-        """Conditional statement"""
-        target: Entity
-        
-        def __init__(self, target: Entity | Selector | str) -> None:
-            """type <dpc.Execute.Conditional>
-            Executor is updated to target entity (which changes the meaning of @s).
-            Forks if <targets> or <origin: target> selects multiple entities.
-            Terminates if <targets> or <origin: target> fails to resolve to one or more valid entities (named players must be online).
-            
-            Kill all sheep: [execute as @e[type=sheep] run kill @s]
-            
-            Args:
-                target (Entity): The target entity
-            """
-            self.target = target
-        
-        def build(self) -> str:
-            return f"as {self.target}"
-        
-    class At(Conditional):
-        """Conditional statement"""
-        target: Entity
-        
-        def __init__(self, target: Entity | Selector | str) -> None:
-            """type <dpc.Execute.Conditional>
-            Execution position, rotation, and dimension are updated to match target entity.
-            Unparseable if the argument is not specified correctly.
-            Forks if <targets> or origin: target selects multiple entities.
-            Terminates if <targets> or origin: target fails to resolve to one or more valid entities (named players must be online).
-            
-            Tp all cheep up one block: [execute as @e[type=sheep] at @s run tp ~ ~1 ~]
-
-            Args:
-                target (Entity): Entity to execute at
-            """
-            self.target = target
-        
-        def build(self) -> str:
-            return f"at {self.target}"
-    
-    class Facing(Conditional):
-        """Conditional statement"""
-        target: WorldPosition | Entity
-        anchor: t.Literal["eyes", "feet"]
-        
-        def __init__(self, target: WorldPosition | Entity, anchor: t.Literal["eyes", "feet"] = "feet") -> None:
-            """type <dpc.Execute.Conditional>
-            Execution rotation is updated to face given position or targets.
-            Unparseable if the argument is not specified correctly.
-            Forks if <targets> or origin: target selects multiple entities.
-            Terminates if <targets> or origin: target fails to resolve to one or more valid entities (named players must be online).
-
-            Args:
-                target (WorldPosition | Entity): Entity position or entity to face
-                anchor (["eyes", "feet"], optional): What point to look at, ignored if target is type <WorldPosition>. Defaults to "feet".
-            """
-            self.target = target
-            self.anchor = anchor
-        
-        def build(self) -> str:
-            return f"facing entity {self.target} {self.anchor}" if isinstance(self.target, Entity) else f"facing {self.target.cmd_str}"
-    
-    class If(Conditional):
-        """Conditional statement"""
-        
-        condition: str
-        
-        def __init__(self, condition: str) -> None:
-            self.condition = condition
-        
-        @classmethod
-        def biome(cls, pos: BlockPosition | list[int] | tuple[int, int, int], biome: Biome | str):
-            pos: BlockPosition = BlockPosition(pos[0], pos[1], pos[2]) if not isinstance(pos, BlockPosition) else pos
-            return cls(f"biome {biome if isinstance(biome, Biome) else Biome(biome)}")
-        
-        @classmethod
-        def block(cls, pos: BlockPosition | list[int] | tuple[int, int, int], block_type: str):
-            pos: BlockPosition = BlockPosition(pos[0], pos[1], pos[2]) if not isinstance(pos, BlockPosition) else pos
-            return cls(f"block {pos.cmd_str} {block_type}")
-        
-        @classmethod
-        def blocks(cls):
-            return 
-        
-        def build(self) -> str:
-            return f"if {self.condition}"
-    
-    class In(Conditional):
-        """Conditional statement"""
-        ...
-    
-    class On(Conditional):
-        """Conditional statement"""
-        ...
-    
-    class Positioned(Conditional):
-        """Conditional statement"""
-        ...
-    
-    class Rotated(Conditional):
-        """Conditional statement"""
-        ...
-    
-    class Store(Conditional):
-        """Conditional statement"""
-        ...
-    
-    # --< Normal Class Stuff >- -#
-    
-    _conditions = list[Conditional]
-    
-    def __init__(self, *conditions: Conditional) -> None:
-        self._conditions = [item for item in conditions]
-    
-    def construct(self) -> str:
-        return f"execute {' '.join([cond.build() for cond in self._conditions])}"
-    
-    def align(self, axis: Swizzle | str) -> t.Self:
-        """Execution position in the given axes are floored, changing by less than 1 block.
-        
-        Given (-1.8, 2.3, 5.9), [execute align xz] changes the position to (-2, 2.3, 5).
-
-        Args:
-            axis (Swizzle | str): The axis to floor
-        """
-        self._conditions.append(self.Align(axis))
+    def __enter__(self):
+        Comment(self.content[0])
         return self
     
-    def anchored(self, anchor: t.Literal["eyes", "feet"] = "feet") -> t.Self:
-        """Execution anchor is set to either the eyes or the feet.
-        Requires an entiry to be selected as the origin for the command
-        
-        [execute anchored eyes run tp ^ ^ ^] effectively teleports the executor's feet to where its eyes are.
-
-        Args:
-            anchor (["eyes", "feet"], optional): Where to anchor the execution. Defaults to "feet".
-        """
-    
-        self._conditions.append(self.Anchored(anchor))
-        return self
-    
-    def as_(self, target: Entity) -> t.Self:
-        """Executor is updated to target entity (which changes the meaning of @s).
-        Forks if <targets> or <origin: target> selects multiple entities.
-        Terminates if <targets> or <origin: target> fails to resolve to one or more valid entities (named players must be online).
-        
-        Kill all sheep: [execute as @e[type=sheep] run kill @s]
-        
-        Args:
-            target (Entity): The target entity
-        """
-        self._conditions.append(self.As(target))
-        return self
-
-    def at(self, target: Entity) -> t.Self:
-        """Execution position, rotation, and dimension are updated to match target entity.
-        Unparseable if the argument is not specified correctly.
-        Forks if <targets> or origin: target selects multiple entities.
-        Terminates if <targets> or origin: target fails to resolve to one or more valid entities (named players must be online).
-        
-        Tp all cheep up one block: [execute as @e[type=sheep] at @s run tp ~ ~1 ~]
-
-        Args:
-            target (Entity): Entity to execute at
-        """
-        self._conditions.append(self.At(target))
-        return self
-    
-    # Potential reason for overloads here, we only need the anchor if target is of type <Entity>
-    def facing(self, target: WorldPosition | Entity, anchor: t.Literal["eyes", "feet"] = "feet") -> t.Self:
-        """Execution rotation is updated to face given position or targets.
-        Unparseable if the argument is not specified correctly.
-        Forks if <targets> or origin: target selects multiple entities.
-        Terminates if <targets> or origin: target fails to resolve to one or more valid entities (named players must be online).
-
-        Args:
-            target (WorldPosition | Entity): Entity position or entity to face
-            anchor (["eyes", "feet"], optional): What point to look at, ignored if target is type <WorldPosition>. Defaults to "feet".
-        """
-        self._conditions.append(self.Facing(target, anchor))
-        return self
-
-
-# Clean Up Namespace
-del t
+    def __exit__(self, exc_type, exc, tb):
+        Comment(self.content[1])
+        return True
