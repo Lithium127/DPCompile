@@ -121,6 +121,7 @@ class PackDSL(ScriptDecoratable):
             out_dir (str, optional): The absolute path for the final directory of this instance. Defaults to "".
             plugins (list | None, optional): A list of plugins to use in development. Defaults to None.
         """
+        super().__init__()
         self._pack_name = pack_name
         self._namespace = namesapce
         # Create metadata
@@ -174,6 +175,7 @@ class PackDSL(ScriptDecoratable):
             shutil.rmtree(self._file_root, ignore_errors=True)
         os.makedirs(self._file_root, exist_ok=True)
         
+        self._prerender_scripts()
         self._build_scoreboard_initializer()
         
         for path in self.directory.tree.keys():

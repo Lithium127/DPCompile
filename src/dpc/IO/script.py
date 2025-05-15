@@ -5,7 +5,7 @@ import inspect
 from abc import ABCMeta
 
 from .packfile import PackFile, FileParentable
-from ..command import BaseCommand, Comment
+from ..command import BaseCommand, Comment, CallFunction
 
 
 class ScriptContext:
@@ -101,6 +101,8 @@ class Script(PackFile):
         self._is_rendered = False
     
     def __call__(self):
+        if BaseCommand._CURRENT_CONTEXT is not None and BaseCommand._CURRENT_CONTEXT is not self.ctx:
+            return CallFunction(self.namespace_name)
         if self._pass_self:
             return self._content_func(self)
         return self._content_func()
@@ -146,6 +148,10 @@ class Script(PackFile):
         if not self.has_ctx:
             self._ctx = ScriptContext(self)
         return self._ctx
+    
+    @property
+    def namespace_name(self) -> str:
+        return f"{self.pack._namespace}:{self.name}"
         
 
 class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
@@ -167,6 +173,12 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         return ...
     ```
     """
+    
+    _script_collectors: list[Script]
+    
+    def __init__(self):
+        super().__init__()
+        self._script_collectors = []
     
     def mcfn(self, name: str = None, *, desc: str = None, dev: bool = False, sort: t.Literal['tick', 'load'] | None = None) -> callable:
         """Decorates a function to create a script.
@@ -280,6 +292,20 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
             return script
         return inner
     
+    def mcraycast(self, name: str = None, *, desc: str = None, dev: bool = False) -> callable:
+        
+        def inner(func: function) -> callable:
+            
+            script = self.create_script_from_callable(func, name=name)
+            
+            script._is_dev = dev
+            
+            # Raycast scripts can never implicitly be ticking or loading
+            self.add_script(script=script, ticking=None)
+            
+            return script
+        return inner
+    
     def add_script(self, script: Script, ticking: bool | None) -> None:
         """Adds a given script instance to this objects
         registry.
@@ -297,7 +323,11 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
                 sort = 'tick' if ticking else 'load'
             )
         # Renders the script proactively for scoreboard discovery
-        script.render()
+        self._script_collectors.append(script)
+    
+    def _prerender_scripts(self) -> None:
+        for script in self._script_collectors:
+            script.render()
     
     def create_script_from_callable(self, func: callable, *, name: str = None) -> Script:
         """Creates a new script instance by observing the attributes of

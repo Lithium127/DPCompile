@@ -15,8 +15,10 @@ with PackDSL(
     def load():
         """Logs that the pack has loaded properly"""
         cmd.Log.info("Pack loaded!")
+        raycast()
     
     @pack.mcfn()
     def raycast():
         cmd.Log.crit("This function is not yet implemented!")
     
+    raycast()
