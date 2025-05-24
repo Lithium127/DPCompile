@@ -67,7 +67,7 @@ class PackDSL(ScriptDecoratable):
     _meta: McMeta
     
     build_dir: str
-    _build_dev: str
+    _build_dev: bool
     
     directory: PackFileSystem
     
@@ -270,6 +270,7 @@ class PackDSL(ScriptDecoratable):
         # The problem is that scoreboards will only be acknowledged after
         # the script is run, which only happens at build time.
         def initialize_scoreboards():
+            """Auto-generated function that initializes all required scoreboards"""
             Scoreboard.initialize_scoreboards()
         
         self.add_script(

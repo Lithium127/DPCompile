@@ -102,7 +102,8 @@ class Script(PackFile):
     
     def __call__(self):
         if BaseCommand._CURRENT_CONTEXT is not None and BaseCommand._CURRENT_CONTEXT is not self.ctx:
-            return CallFunction(self.namespace_name)
+            if BaseCommand._CURRENT_CONTEXT.script.pack._build_dev or (not self._is_dev):
+                return CallFunction(self.namespace_name)
         if self._pass_self:
             return self._content_func(self)
         return self._content_func()

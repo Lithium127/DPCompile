@@ -7,8 +7,8 @@ import typing as t
 
 from abc import ABC, abstractmethod
 
-from .datatypes import Version, TextElement
-from .datatypes import to_textelement
+from .datatypes import Version
+from .datatypes import TextElement
 
 if t.TYPE_CHECKING:
     from .IO.script import ScriptContext, Script
@@ -160,9 +160,9 @@ class Log(BaseCommand):
     automatically flagged as developmet to avoid."""
     
     _COLOR_MAPPING = {
-        'info' : TextElement.Colors.WHITE,
-        'warning' : TextElement.Colors.YELLOW,
-        'critical' : TextElement.Colors.RED
+        'info' : "white",
+        'warning' : "yellow",
+        'critical' : "red"
     }
     
     _script: Script | None

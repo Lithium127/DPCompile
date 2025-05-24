@@ -5,7 +5,10 @@ from enum import Enum
 import json
 
 from . import MinecraftType
+from .selector import ensure_selector
 
+if t.TYPE_CHECKING:
+    from .selector import Selector
 
 class TextElement(MinecraftType):
     """Represents a JSON encoded text element that is parsable by minecraft commands"""

@@ -20,6 +20,12 @@ class MinecraftType(ABC):
     def __init__(self):
         raise NotImplementedError("Cannot instance an abstract class")
     
+    def __str__(self) -> str:
+        return self.to_command_str()
+    
+    def __repr__(self):
+        return super().__repr__()
+    
     @abstractmethod
     def to_command_str(self) -> str:
         """Return the string representation used in commands."""

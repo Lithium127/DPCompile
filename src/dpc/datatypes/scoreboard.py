@@ -1,5 +1,6 @@
 from __future__ import annotations
 import typing as t
+from enum import Enum
 
 from .selector import Selector, ensure_selector
 
@@ -16,6 +17,27 @@ def get_current_pack() -> PackDSL:
 
 
 
+class ScoreCriteria(Enum):
+    """Enumeration of all valid scoreboard criteria"""
+    
+    DUMMY = "dummy"
+    """This scoreboard will not increase in value through natural means, requiring the scoreboard command to explicitly set its value."""
+
+
+class ScoreboardClosure(BaseCommand):
+    """Represents a scoreboard command targeting a set
+    amount of data."""
+    
+    _content: str
+    
+    def __init__(self, content: str, **kwargs):
+        super().__init__(**kwargs)
+        self._content = content
+    
+    def build(self):
+        return f"scoreboard {self._content}"
+
+
 class Scoreboard:
     """Represents a scoreboard that can store a value per entity within the game.
     
@@ -25,16 +47,17 @@ class Scoreboard:
     _SCOREBOARD_REGISTRY: dict[str, Scoreboard] = {}
     
     _name: str
+    _criteria: str
     _registered_in: set[PackDSL]
     
-    def __new__(cls, name: str) -> Scoreboard:
+    def __new__(cls, name: str, *args, **kwargs) -> Scoreboard:
         if name in cls._SCOREBOARD_REGISTRY:
             return cls._SCOREBOARD_REGISTRY[name]
         instance = super().__new__(cls)
         cls._SCOREBOARD_REGISTRY[name] = instance
         return instance
     
-    def __init__(self, name: str):
+    def __init__(self, name: str, *, criteria: str = None):
         """Instances a new scoreboard with the given name.
         If the board already exists then it returns the
         pre-existing instance with that name, meaning instances
@@ -51,6 +74,7 @@ class Scoreboard:
             name (str): The name of this scoreboard.
         """
         self._name = name
+        self._criteria = criteria or ScoreCriteria.DUMMY.value
         self._registered_in = set()
         
     @classmethod
@@ -65,6 +89,10 @@ class Scoreboard:
             return
         for scoreboard in pack._scoreboards:
             scoreboard.create()
+    
+    
+    def set_criteria(self, criteria: str) -> None:
+        self._criteria = criteria
         
     
     @property
@@ -96,7 +124,7 @@ class Scoreboard:
         """
         return (f"{get_current_pack()._namespace}_" or "") + self.real_name
     
-    def set_value(self, target: Selector | str, value: int, **kwargs) -> BaseCommand:
+    def set_value(self, target: Selector | str, value: int, **kwargs) -> ScoreboardClosure:
         """Generates a command, and if a script context
         is set, attaches that command to the build context,
         that sets the value of a given scoreboard for all
@@ -110,8 +138,12 @@ class Scoreboard:
             value (int): The integer value to set the targets score to.
         """
         self._add_to_pack_registry()
-        return Command(f"scoreboard players set {ensure_selector(target).to_command_str()} {self.name()} {value}")
+        return ScoreboardClosure(f"players set {ensure_selector(target).to_command_str()} {self.name()} {value}", **kwargs)
     
+    
+    def increment(self, target: Selector | str, value: int, **kwargs) -> ScoreboardClosure:
+        self._add_to_pack_registry()
+        return ScoreboardClosure(f"players add {ensure_selector(target).to_command_str()} {self.name()} {value}", **kwargs)
     
     
     def create(self) -> BaseCommand:
@@ -123,7 +155,7 @@ class Scoreboard:
             BaseCommand: The command instance
         """
         self._add_to_pack_registry()
-        return Command(f"scoreboard objectives add {self.name()} dummy")
+        return Command(f"scoreboard objectives add {self.name()} {self._criteria}")
     
     
     def reset(self, target: Selector | str, **kwargs) -> BaseCommand:

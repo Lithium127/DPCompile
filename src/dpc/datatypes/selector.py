@@ -5,6 +5,9 @@ from enum import Enum
 
 from . import MinecraftType
 
+if t.TYPE_CHECKING:
+    from .scoreboard import Scoreboard
+
 class SelectorGroup(Enum):
     EVERYTHING = "e"
     """`[SelectorGroup]`: Target every loaded, ticking entity within the world, including players"""
@@ -18,6 +21,14 @@ class SelectorGroup(Enum):
     """`[SelectorGroup]`: Target the currently selected entity that the current command is referencing"""
 
 class Selector(MinecraftType):
+    """Representation of a selection of entities within the minecraft world.
+    Selectors can be filtered by a conditions list to limit the number of
+    entities selected.
+    
+    To see possible options for selectors, look at the `SelectorGroup` enum or
+    use the class methods shortcuts.
+    
+    """
     
     GROUP = SelectorGroup
     """An enum containing all available groups that a selector can reference."""
@@ -28,6 +39,8 @@ class Selector(MinecraftType):
     def __init__(self, group: str, conditions: dict[str, t.Any] = {}):
         self.selector = group
         self.conditions = conditions
+    
+    
     
     @classmethod
     def ALL(cls, **kwargs) -> Selector:
@@ -41,6 +54,14 @@ class Selector(MinecraftType):
         cls.__init__(instance, SelectorGroup.ALL, **kwargs)
         return instance
     
+    
+    
+    def scoreboard(self, title: str) -> Scoreboard:
+        # TODO: Scoreboards need a method to have a default selector passed or otherwise set.
+        return Scoreboard()
+    
+    
+    
     @property
     def selector(self) -> str:
         return self._selector
@@ -49,9 +70,12 @@ class Selector(MinecraftType):
     def selector(self, value: str) -> None:
         self._selector = value if isinstance(value, str) else value.value
     
+    
+    
     def to_command_str(self):
         conditions_list = [f"{key}={value}" for key, value in self.conditions.items()]
         return f"@{self._selector}" + ("[" + ",".join(conditions_list) + "]" if len(conditions_list) > 0 else "")
+    
 
 def ensure_selector(target: str | Selector) -> Selector:
     """Ensures that a given argument is a selector by
