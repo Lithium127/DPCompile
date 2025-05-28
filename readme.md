@@ -3,6 +3,12 @@ A program that seeks to eliminate pains with Minecraft Datapack development. Thi
 program constructs a datapack from normal python building blocks, meaning anyone
 can create a datapack if they have even a little experience with python.
 
+> #### Work in Progress
+> This project is still in development and is not yet available for public use. To see how to contribute to this project see the [contributing](#contributing) section
+
+
+## Features
+
 ### Decorator Based Syntax
 To keep in the python way, this library leverages decorators to attach functions that generate
 the content of each script. This allows for multiple scripts to be created within the same
@@ -79,3 +85,6 @@ with PackDSL(..., dev = False) as pack:
         # Commands can be marked as dev as well
         cmd.Command("say test", dev = True)
 ```
+
+## Contributing
+Thus far this project has been managed by a single person, however this project is free for anyone to make changes to or improve.
