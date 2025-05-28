@@ -4,7 +4,7 @@ from enum import Enum
 
 from .selector import Selector, ensure_selector
 
-from ..command import Command, BaseCommand
+from ..cmd.command import Command, BaseCommand
 
 if t.TYPE_CHECKING:
     from ..packdsl import PackDSL

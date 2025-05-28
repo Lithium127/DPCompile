@@ -5,7 +5,7 @@ import inspect
 from abc import ABCMeta
 
 from .packfile import PackFile, FileParentable
-from ..command import BaseCommand, Comment, CallFunction
+from ..cmd.command import BaseCommand, Comment, CallFunction
 
 
 class ScriptError(Exception):

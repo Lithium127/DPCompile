@@ -11,7 +11,7 @@ from .IO.script import Script, ScriptDecoratable, ScriptError
 from .IO.tagtable import TagTable
 from .datatypes import Version
 
-from .command import Comment
+from .cmd.command import Comment
 from .datatypes import Scoreboard
 
 if t.TYPE_CHECKING:

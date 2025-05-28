@@ -92,4 +92,4 @@ from .datatypes import Selector as Selector
 from .datatypes import ensure_selector as ensure_selector
 
 # Commands
-from . import command as cmd
+from . import cmd as cmd
