@@ -79,7 +79,9 @@ from .datatypes import Literal as Literal
 from .datatypes import Version as Version
 from .datatypes import Versionable as Versionable
 from .datatypes import VersionRange as VersionRange
+from .datatypes import ScoreCriteria as ScoreCriteria
 from .datatypes import Scoreboard as Scoreboard
+from .datatypes import ScoreboardClosure as ScoreboardClosure
 
 # MinecraftType Datatypes
 from .datatypes import Block as Block

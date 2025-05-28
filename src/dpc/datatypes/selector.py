@@ -70,8 +70,6 @@ class Selector(MinecraftType):
     def selector(self, value: str) -> None:
         self._selector = value if isinstance(value, str) else value.value
     
-    
-    
     def to_command_str(self):
         conditions_list = [f"{key}={value}" for key, value in self.conditions.items()]
         return f"@{self._selector}" + ("[" + ",".join(conditions_list) + "]" if len(conditions_list) > 0 else "")

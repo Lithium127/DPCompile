@@ -8,6 +8,11 @@ from .packfile import PackFile, FileParentable
 from ..command import BaseCommand, Comment, CallFunction
 
 
+class ScriptError(Exception):
+    script: Script = None
+    pass
+
+
 class ScriptContext:
     """Represents the content of a script during rendering"""
     
@@ -35,8 +40,9 @@ class ScriptContext:
         self._writable = False
         BaseCommand._pop_context()
         if exc:
-            print(f"exc in script {self.script.full_name}:\n{exc}")
-            return True
+            new_exc = ScriptError(f"{exc_type.__name__} while rendering script {self.script.full_name}")
+            new_exc.script = self.script
+            raise new_exc from exc
         return False
     
     def add_cmd(self, data: t.Any, *, index: int | None = None) -> None:
@@ -101,9 +107,14 @@ class Script(PackFile):
         self._is_rendered = False
     
     def __call__(self):
-        if BaseCommand._CURRENT_CONTEXT is not None and BaseCommand._CURRENT_CONTEXT is not self.ctx:
+        if BaseCommand._CURRENT_CONTEXT is not None and not BaseCommand._CURRENT_CONTEXT is self.ctx:
+            # Case for calling within other functions
             if BaseCommand._CURRENT_CONTEXT.script.pack._build_dev or (not self._is_dev):
-                return CallFunction(self.namespace_name)
+                return self.get_command()
+        # Case for out of context calls
+        return self._call_content_function()
+    
+    def _call_content_function(self) -> t.Any:
         if self._pass_self:
             return self._content_func(self)
         return self._content_func()
@@ -135,6 +146,15 @@ class Script(PackFile):
         else:
             content.append(Comment(f"No content generated for {self.full_name}", register = False).build())    
         return "\n".join(content)
+    
+    def get_command(self) -> CallFunction:
+        """Creates and attaches the minecraft 
+        executable command that runs this script
+
+        Returns:
+            CallFunction: The Command that runs this script
+        """
+        return CallFunction(self.namespace_name)
     
     @property
     def has_ctx(self) -> None:
@@ -327,6 +347,10 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         self._script_collectors.append(script)
     
     def _prerender_scripts(self) -> None:
+        """Internal function to render all scripts
+        attached to this object at once to resolve
+        pathing conflicts and obtain scoreboards
+        """
         for script in self._script_collectors:
             script.render()
     

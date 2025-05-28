@@ -7,7 +7,7 @@ from enum import Enum
 from collections import defaultdict
 
 from .IO.mcmeta import McMeta
-from .IO.script import Script, ScriptDecoratable
+from .IO.script import Script, ScriptDecoratable, ScriptError
 from .IO.tagtable import TagTable
 from .datatypes import Version
 
@@ -16,6 +16,11 @@ from .datatypes import Scoreboard
 
 if t.TYPE_CHECKING:
     from .IO.packfile import PackFile
+
+
+
+class PackError(Exception):
+    pass
 
 
 class PackFileSystem:
@@ -151,9 +156,9 @@ class PackDSL(ScriptDecoratable):
     
     def __exit__(self, exc_type, exc, tb) -> bool | None:
         if exc:
-            # TODO: Replace with functional error handling rather than letting error bubble up
+            # For user caused errors within pack scope
+            # emit error without building
             return False
-        # Build the pack unless defered.
         self._build()
     
     
@@ -175,7 +180,12 @@ class PackDSL(ScriptDecoratable):
             shutil.rmtree(self._file_root, ignore_errors=True)
         os.makedirs(self._file_root, exist_ok=True)
         
-        self._prerender_scripts()
+        try:
+            self._prerender_scripts()
+        except ScriptError as e:
+            raise PackError(f"Exception found within {self._pack_name} " + 
+                            f"building for version {self.version} [{self.version.pack_reference}] " +
+                            f"while rendering '{e.script.full_name}' ({e.script.namespace_name})") from e
         self._build_scoreboard_initializer()
         
         for path in self.directory.tree.keys():

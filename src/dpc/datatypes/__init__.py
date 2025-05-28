@@ -67,4 +67,6 @@ from .selector import Selector as Selector
 from .selector import ensure_selector as ensure_selector
 
 # Command dependent datatypes
+from .scoreboard import ScoreCriteria as ScoreCriteria
 from .scoreboard import Scoreboard as Scoreboard
+from .scoreboard import ScoreboardClosure as ScoreboardClosure
