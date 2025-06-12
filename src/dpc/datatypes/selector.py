@@ -5,8 +5,24 @@ from enum import Enum
 
 from . import MinecraftType
 
-if t.TYPE_CHECKING:
-    from .scoreboard import Scoreboard
+
+def ensure_selector(target: str | Selector) -> Selector:
+    """Ensures that a given argument is a selector by
+    converting single character string values into
+    a selection
+
+    Args:
+        target (str | Selector): The value to validate
+
+    Returns:
+        Selector: The selector instance
+    """
+    if isinstance(target, Selector):
+        return target
+    return Selector(target)
+
+
+from .scoreboard import Scoreboard
 
 class SelectorGroup(Enum):
     EVERYTHING = "e"
@@ -19,6 +35,7 @@ class SelectorGroup(Enum):
     """`[SelectorGroup]`: Target the player nearest to the location the current command executed at"""
     CURRENT = "s"
     """`[SelectorGroup]`: Target the currently selected entity that the current command is referencing"""
+
 
 class Selector(MinecraftType):
     """Representation of a selection of entities within the minecraft world.
@@ -41,6 +58,19 @@ class Selector(MinecraftType):
         self.conditions = conditions
     
     
+    @classmethod
+    def EVERYTHING(cls, **kwargs) -> Selector:
+        """Creates a selector object that targets
+        all loaded entities within the world. 
+        Synonomous with `'@e'`
+
+        Returns:
+            Selector: Generated selector
+        """
+        instance = super().__new__(cls)
+        cls.__init__(instance, SelectorGroup.EVERYTHING, **kwargs)
+        return instance
+    
     
     @classmethod
     def ALL(cls, **kwargs) -> Selector:
@@ -55,11 +85,56 @@ class Selector(MinecraftType):
         return instance
     
     
+    @classmethod
+    def RANDOM(cls, **kwargs) -> Selector:
+        """Creates a selector object that targets
+        a random player. Synonomous with `'@r'`
+
+        Returns:
+            Selector: Generated selector
+        """
+        instance = super().__new__(cls)
+        cls.__init__(instance, SelectorGroup.RANDOM, **kwargs)
+        return instance
+    
+    
+    @classmethod
+    def NEAREST(cls, **kwargs) -> Selector:
+        """Creates a selector object that targets
+        the nearest player. Synonomous with `'@p'`
+
+        Returns:
+            Selector: Generated selector
+        """
+        instance = super().__new__(cls)
+        cls.__init__(instance, SelectorGroup.NEAREST, **kwargs)
+        return instance
+    
+    
+    @classmethod
+    def CURRENT(cls, **kwargs) -> Selector:
+        """Creates a selector object that targets
+        the current player. Synonomous with `'@s'`
+
+        Returns:
+            Selector: Generated selector
+        """
+        instance = super().__new__(cls)
+        cls.__init__(instance, SelectorGroup.CURRENT, **kwargs)
+        return instance
+    
+    
+    def if_score(self, score: str | Scoreboard, value, *, operator: t.Literal[">", "<"] | None = None) -> Selector:
+        score = score if isinstance(score, Scoreboard) else Scoreboard(score)
+        if not "scores" in self.conditions:
+            self.conditions["scores"] = []
+        self.conditions["scores"].append(f"{score.name()}={'..' if operator == '<' else ''}{value}{'..' if operator == '>' else ''}")
+        return self
+    
     
     def scoreboard(self, title: str) -> Scoreboard:
         # TODO: Scoreboards need a method to have a default selector passed or otherwise set.
         return Scoreboard()
-    
     
     
     @property
@@ -70,22 +145,17 @@ class Selector(MinecraftType):
     def selector(self, value: str) -> None:
         self._selector = value if isinstance(value, str) else value.value
     
+    
+    def _build_condition_list(self) -> list[str]:
+        conditions = []
+        for key, value in self.conditions.items():
+            if isinstance(value, list):
+                value = "{" + ",".join(value) + "}"
+            conditions.append(f"{key}={value}")
+        return conditions
+    
+    
     def to_command_str(self):
-        conditions_list = [f"{key}={value}" for key, value in self.conditions.items()]
+        conditions_list = self._build_condition_list()
         return f"@{self._selector}" + ("[" + ",".join(conditions_list) + "]" if len(conditions_list) > 0 else "")
     
-
-def ensure_selector(target: str | Selector) -> Selector:
-    """Ensures that a given argument is a selector by
-    converting single character string values into
-    a selection
-
-    Args:
-        target (str | Selector): The value to validate
-
-    Returns:
-        Selector: The selector instance
-    """
-    if isinstance(target, Selector):
-        return target
-    return Selector(target)

@@ -76,10 +76,13 @@ class Script(PackFile):
     
     _content_func: callable
     _pass_self: bool
+    _method_instance: object
     
     _ctx: ScriptContext | None
     
     _is_rendered: bool
+    
+    _parent: ScriptDecoratable
     
     def __init__(self, name: str, content: callable | None, *, pass_script: bool = False):
         """Represents a script file within a datapack that can hold commands and operations.
@@ -103,6 +106,7 @@ class Script(PackFile):
         
         self._content_func = content
         self._pass_self = pass_script
+        self._method_instance = None
         self._ctx = None
         self._is_rendered = False
     
@@ -115,9 +119,12 @@ class Script(PackFile):
         return self._call_content_function()
     
     def _call_content_function(self) -> t.Any:
+        args = []
+        if self._method_instance is not None:
+            args.append(self._method_instance)
         if self._pass_self:
-            return self._content_func(self)
-        return self._content_func()
+            args.append(self)
+        return self._content_func(*args)
     
     def render(self):
         if not self._is_rendered:
@@ -175,6 +182,7 @@ class Script(PackFile):
         return f"{self.pack._namespace}:{self.name}"
         
 
+# TODO: Update storage method for scripts, as modules should be able to attach scripts directly without needing a parent
 class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
     """An abstract class that provides an object with
     a decorator that turns a function into the content
@@ -201,7 +209,7 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         super().__init__()
         self._script_collectors = []
     
-    def mcfn(self, name: str = None, *, desc: str = None, dev: bool = False, sort: t.Literal['tick', 'load'] | None = None) -> callable:
+    def mcfn(self, name: str = None, *, dev: bool = False, sort: t.Literal['tick', 'load'] | None = None) -> callable:
         """Decorates a function to create a script.
         Adds a `.mcfunction` file, or `script`, to the parent object's collectors 
         attribute.
@@ -286,28 +294,23 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
                                     then the name is interpreted from the name 
                                     of the function. 
                                     Defaults to None.
-            desc (str, optional):   The optional description for the given script.
-                                    The description will be taken from the function
-                                    if availabe and if this argument is left to be
-                                    default.
-                                    Defaults to None.
             dev (bool, optional):   If this script is intended to exist only as
                                     a developmental tool for this pack. If set
                                     to true then when the pack build state is
                                     set to anything other than `dev` this script
                                     will skip the compilation step. 
                                     Defaults to False
+            sort (['tick', 'load'], optional): Set if this script should be run each
+                                    game tick or on pack load. If `None` then then
+                                    the script is not called in either case.
+                                    Defaults to None
 
         Returns:
             Script: The new script instance that wraps the function passed
         """
         
         def inner(func: function) -> callable:
-            script = self.create_script_from_callable(func, name=name)
-            
-            # Determine the development build type
-            script._is_dev = dev
-            
+            script = self.create_script_from_callable(func, name=name, dev=dev)
             is_ticking = None if sort is None else (sort == 'tick')
             self.add_script(script, ticking=is_ticking)
             return script
@@ -327,15 +330,17 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
             return script
         return inner
     
-    def add_script(self, script: Script, ticking: bool | None) -> None:
+    def add_script(self, script: Script, ticking: bool | None, *, alternate_path: str = "") -> None:
         """Adds a given script instance to this objects
         registry.
 
         Args:
             script (Script): The script object to add
         """
+        
+        script._parent = self
         self._pack_reference.register_file(
-            f"data/{self._pack_reference._namespace}/function",
+            f"data/{self._pack_reference._namespace}/function{'/'+alternate_path if len(alternate_path) > 0 else ''}",
             script
         )
         if ticking is not None:
@@ -349,12 +354,15 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
     def _prerender_scripts(self) -> None:
         """Internal function to render all scripts
         attached to this object at once to resolve
-        pathing conflicts and obtain scoreboards
+        pathing conflicts and obtain scoreboards.
+        
+        Also pre-renders modules and attaches the
+        scripts contained to the pack directory
         """
         for script in self._script_collectors:
             script.render()
     
-    def create_script_from_callable(self, func: callable, *, name: str = None) -> Script:
+    def create_script_from_callable(self, func: callable, *, name: str = None, dev: bool = False,  instance: object = None) -> Script:
         """Creates a new script instance by observing the attributes of
         a given function. The function is run each time the script is rendered
 
@@ -369,12 +377,16 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         pass_script = False
         if len(args.args) >= 1:
             # Get type if available otherwise set to true
-            pass_script = args.annotations.get(args.args[0], Script) is Script
+            if instance is None or len(args.args) >= 2:
+                pass_script = args.annotations.get(args.args[0], Script) is Script
+                
         
         script = Script(
             name = name or func.__name__,
             content = func,
             pass_script=pass_script
         )
+        script._is_dev = dev
+        script._method_instance = instance
         return script
         

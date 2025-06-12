@@ -16,6 +16,7 @@ from .datatypes import Scoreboard
 
 if t.TYPE_CHECKING:
     from .IO.packfile import PackFile
+    from .module import Module
 
 
 
@@ -77,6 +78,8 @@ class PackDSL(ScriptDecoratable):
     directory: PackFileSystem
     
     _scoreboards: set[Scoreboard]
+    
+    _modules: list[Module]
     
     def __init__(self, 
                  pack_name: str,
@@ -144,6 +147,7 @@ class PackDSL(ScriptDecoratable):
         
         # Scoreboard registry
         self._scoreboards = set()
+        self._modules = []
     
     
     
@@ -287,6 +291,20 @@ class PackDSL(ScriptDecoratable):
             Script("initialize_scoreboards", initialize_scoreboards),
             ticking=False
         )
+    
+    
+    def _prerender_scripts(self) -> None:
+        super()._prerender_scripts()
+        
+        for module in self._modules:
+            module._prerender_scripts()
+    
+    
+    
+    def mount(self, module: Module, path: str = "/") -> None:
+        self._modules.append(module)
+        module._root_dir = path
+        module._parent = self
         
         
     @property

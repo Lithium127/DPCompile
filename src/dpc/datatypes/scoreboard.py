@@ -2,12 +2,13 @@ from __future__ import annotations
 import typing as t
 from enum import Enum
 
-from .selector import Selector, ensure_selector
+from .selector import ensure_selector
 
 from ..cmd.command import Command, BaseCommand
 
 if t.TYPE_CHECKING:
     from ..packdsl import PackDSL
+    from .selector import Selector
 
 # TODO: Move to command.py
 def get_current_pack() -> PackDSL:

@@ -1,11 +1,45 @@
-from src.dpc import PackDSL, cmd, Script, Scoreboard, Selector, TextElement, ScoreCriteria
+from src.dpc import PackDSL, cmd, Scoreboard, Selector, ScoreCriteria, Module, modulemethod, Script
 
 WORLD_BUILD_PATH = "C:/Users/lman_/AppData/Roaming/.minecraft/saves/DPCompile Testing World/datapacks"
 LOCAL_BUILD_PATH = "C:/Users/lman_/Personal Projects/python/DPCompile"
 
-plr_data = [
-    "is_sneaking", "in_air"
-]
+class TreeModule(Module):
+    
+    split_angle: int
+    
+    def __init__(self, name: str, split_angle: int):
+        super().__init__(name)
+        self.split_angle = split_angle
+    
+    @modulemethod()
+    def spawn(self):
+        cmd.Log.info(f"Spawned tree of type [{self._module_name}]")
+    
+    @modulemethod()
+    def propogate(self):
+        cmd.Comment("This is where the recursing call for generating tree segments works")
+        cmd.Comment(f"Split angle: {self.split_angle}")
+
+
+class SpellModule(Module):
+    
+    cast_func: callable
+    
+    def __init__(self, name, cast_func: callable):
+        super().__init__(name)
+        self.cast_func = cast_func
+    
+    @modulemethod()
+    def cast(self):
+        cmd.Comment(f"The cast function for {self._module_name} spell")
+        self.cast_func()
+    
+    @modulemethod()
+    def give(self):
+        cmd.Command("summon item ~ ~ ~")
+    
+    
+        
 
 # Pack Creation
 with PackDSL(
@@ -16,25 +50,15 @@ with PackDSL(
         dev = True
     ) as pack:
     
-    Scoreboard("is_sneaking", criteria=ScoreCriteria.player_kill_count())
+    pack.mount(SpellModule("test", lambda: cmd.Comment("Spell content go here")), "spells")
     
     @pack.mcfn(sort="load")
     def load():
-        cmd.Log.info("Pack loaded properly")
+        cmd.Log.info("Pack loaded")
     
     @pack.mcfn(sort="tick")
-    def tick():
-        update_positions()
-        reset_scores()
-    
-    @pack.mcfn()
-    def reset_scores():
-        Scoreboard("is_sneaking").reset(Selector.ALL())
-    
-    def update_positions():
-        # Replace with data set command
-        # Ex: execute store result score @a tcev_plr_x run data get position[0]
-        cmd.Comment("Updating player coordinate tracking")
-        Scoreboard("plr_x").set_value(Selector.ALL(), 5)
-        Scoreboard("plr_y").set_value(Selector.ALL(), 5)
-        Scoreboard("plr_z").set_value(Selector.ALL(), 5)
+    def display_death_screen():
+        """Displays a script when the player dies"""
+        dead_players = Selector.ALL().if_score(Scoreboard("has_died", criteria=ScoreCriteria.death_count()), 1, operator=">")
+        cmd.Command(f"execute as {dead_players} at @s if entity @s run " + cmd.Log.info("Detected player death", register=False).build())
+        Scoreboard("has_died").reset(dead_players)

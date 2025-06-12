@@ -72,6 +72,7 @@ class McMeta(JsonFile):
         super().__init__(
             name = "pack.mcmeta"
         )
+        self.extension = "mcmeta"
         self.description = description
         self.supported_formats = supported_format
         self.features = features
