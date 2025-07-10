@@ -88,3 +88,10 @@ with PackDSL(..., dev = False) as pack:
 
 ## Contributing
 Thus far this project has been managed by a single person, however this project is free for anyone to make changes to or improve.
+
+
+Potentual updates:
+- replace vector class with named tuple and set of functions to operate
+- - use static caching to store function constants via expensive functions
+
+- - limit number of hashs that occur each loop
