@@ -9,6 +9,20 @@ from .IO.script import ScriptDecoratable, Script
 if t.TYPE_CHECKING:
     from .packdsl import PackDSL
 
+"""
+# Current Issues with `modulemethod`
+
+Currently, the method instance attached to a class is not
+converted into a script object until build time. 
+
+This is problematic because script helper methods, such as
+those that create the `function <path>` command, only work
+if the function instance in replaced with a script wrapper.
+
+Possible fix would be to replace the function definition
+at module instance initialization, or to replace the 
+methods at the class level.
+"""
 
 def modulemethod(name: str = None, *, dev: bool = False, sort: t.Literal['tick', 'load'] | None = None):
     """Decorator that marks a module method as a script to be collected
