@@ -2,6 +2,7 @@ from __future__ import annotations
 import typing as t
 import os
 import shutil
+from pathlib import Path
 
 from enum import Enum
 from collections import defaultdict
@@ -13,6 +14,7 @@ from .datatypes import Version
 
 from .cmd.command import Comment
 from .datatypes import Scoreboard
+
 
 if t.TYPE_CHECKING:
     from .IO.packfile import PackFile
@@ -141,7 +143,8 @@ class PackDSL(ScriptDecoratable):
         self._version = version if isinstance(version, Version) else Version(version)
         self._plugins = plugins or []
         
-        self.build_dir = out_dir
+        
+        self.build_dir = Path(out_dir)
         # Default building for development
         self._build_dev = dev
         

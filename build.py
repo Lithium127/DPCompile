@@ -1,7 +1,8 @@
 from src.dpc import PackDSL, cmd, Scoreboard, Selector, ScoreCriteria, Module, modulemethod, Script
 
-WORLD_BUILD_PATH = "C:/Users/lman_/AppData/Roaming/.minecraft/saves/DPCompile Testing World/datapacks"
-LOCAL_BUILD_PATH = "C:/Users/lman_/Personal Projects/python/DPCompile"
+LOCAL_BUILD_PATH = "C:\\Users\\Liam\\Documents\\Personal Projects\\Python\\DPCompile"
+
+print(__package__)
 
 class TreeModule(Module):
     
@@ -50,7 +51,8 @@ with PackDSL(
         dev = True
     ) as pack:
     
-    pack.mount(SpellModule("test", lambda: cmd.Comment("Spell content go here")), "spells")
+    test = SpellModule("test", lambda: cmd.Comment("Spell content go here"))
+    pack.mount(test, "spells")
     
     @pack.mcfn(sort="load")
     def load():
@@ -61,4 +63,5 @@ with PackDSL(
         """Displays a script when the player dies"""
         dead_players = Selector.ALL().if_score(Scoreboard("has_died", criteria=ScoreCriteria.death_count()), 1, operator=">")
         cmd.Command(f"execute as {dead_players} at @s if entity @s run " + cmd.Log.info("Detected player death", register=False).build())
+        test.cast()
         Scoreboard("has_died").reset(dead_players)

@@ -139,6 +139,7 @@ class Script(PackFile):
             content = [
                 Comment(f"This script was automatically generated for [{self.pack._pack_name}]").build(),
                 Comment(f"MC Version: {self.pack.version} [{self.pack.version.pack_reference}]").build(),
+                # Comment(f"File Path: {self._parent}"),
                 "", # Blank line for formatting
             ]
             
@@ -180,7 +181,33 @@ class Script(PackFile):
     @property
     def namespace_name(self) -> str:
         return f"{self.pack._namespace}:{self.name}"
-        
+
+
+class RayCastScript(Script):
+    """Represetns a script file that recursively iterates until either 
+    a depth limit is reached or an end condition is true."""
+
+    max_depth: int
+
+    def __init__(self, name, content, depth: int, *, pass_script = False):
+        """_summary_
+
+        Args:
+            name (_type_): _description_
+            content (_type_): _description_
+            depth (int): _description_
+            pass_script (bool, optional): _description_. Defaults to False.
+        """
+        super().__init__(name, content, pass_script=pass_script)
+        self.max_depth = depth
+    
+    def stop():
+        """Signals the Recursive script to halt iteration
+
+        Returns:
+            BaseCommand: The command that halts iteration
+        """
+        return Comment("This is a comment...")
 
 # TODO: Update storage method for scripts, as modules should be able to attach scripts directly without needing a parent
 class ScriptDecoratable(FileParentable, metaclass=ABCMeta):

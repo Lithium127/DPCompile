@@ -4,7 +4,7 @@ import os
 
 import inspect
 
-from .IO.script import ScriptDecoratable
+from .IO.script import ScriptDecoratable, Script
 
 if t.TYPE_CHECKING:
     from .packdsl import PackDSL
@@ -65,20 +65,23 @@ class Module(ScriptDecoratable):
                     member_args = getattr(member, "_mcfn_args")
                     # Create and attach known scripts
                     # Note that the module is also able to decorate standard scripts.
+                    script = self.create_script_from_callable(
+                        member, 
+                        name=member_args["name"], 
+                        dev=member_args["dev"],
+                        instance=self
+                    )
                     self.add_script(
-                        self.create_script_from_callable(
-                            member, 
-                            name=member_args["name"], 
-                            dev=member_args["dev"],
-                            instance=self
-                        ), 
+                        script, 
                         None if member_args["sort"] is None else (member_args["sort"] == 'tick'),
                         alternate_path=self.module_path
                     )
+                    self.__setattr__(name, script)
+
         self._scripts_collected = True
     
     def build(self) -> None:
-        # Differ script collection until
+        # Defer script collection until
         self._collect_scripts()
     
     @property
