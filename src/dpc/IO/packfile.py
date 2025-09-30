@@ -107,7 +107,38 @@ class PackFile(ABC):
         # Format and pull path and name
         self.full_name = name
         self._is_dev = False
-        
+    
+
+    @classmethod
+    def load_external_resource(cls, path: os.PathLike) -> PackFile:
+        """Attempts to load an external resource at a given directory.
+        The content of the file at that location will be used for the
+        content of the file.
+
+        External file content will be read as a string and loaded to a
+        subclass of PackFile via the `load(content: t.Any)` method.
+
+        Args:
+            path (os.PathLike): The path to the file
+
+        Returns:
+            PackFile: The loaded file
+        """
+        instance = object.__new__(cls)
+        if not os.path.exists(path):
+            raise FileNotFoundError(f"No file found at requested directory\n\tDirectory: {path}")
+        with open(path, "r") as reader:
+            instance.load(reader.read())
+        return instance
+    
+
+    def load(self, content: t.Any) -> None:
+        """Loads content into a file, used for loading
+        pre-set or external resources into a pack directory
+
+        Args:
+            content (t.Any): The content to make into a file
+        """
         
     
     def write(self, path: str | None = None) -> None:
