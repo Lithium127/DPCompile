@@ -71,6 +71,7 @@ class Module(ScriptDecoratable):
         self._root_dir = ""
         self._module_name = name
         self._scripts_collected = False
+        # Scripts are collected at module mount
     
     def _collect_scripts(self) -> None:
         if not self._scripts_collected:
@@ -96,6 +97,7 @@ class Module(ScriptDecoratable):
     
     def build(self) -> None:
         # Defer script collection until
+        print(f"Redundant call to module._collect_scripts() in {__file__}")
         self._collect_scripts()
     
     @property
