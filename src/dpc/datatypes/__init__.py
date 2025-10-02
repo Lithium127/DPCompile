@@ -59,7 +59,7 @@ from .version import VersionRange as VersionRange
 
 # Other pack imports
 from .block import Block as Block
-from .block import Blocks as Blocks
+# from .block import Blocks as Blocks
 from .position import Position as Position
 from .textelement import TextElement as TextElement
 from .textelement import to_textelement as to_textelement
@@ -70,3 +70,5 @@ from .selector import ensure_selector as ensure_selector
 from .scoreboard import ScoreCriteria as ScoreCriteria
 from .scoreboard import Scoreboard as Scoreboard
 from .scoreboard import ScoreboardClosure as ScoreboardClosure
+
+from .enum.block_enum import Blocks

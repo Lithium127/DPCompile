@@ -8,12 +8,22 @@ from . import MinecraftType
 
 class Block(MinecraftType):
     
+    id: int
     namespace: str
     name: str
+    display_name: str
     
     tags: dict[str, t.Any]
     
-    def __init__(self, name: str, namespace: str | None = None, tags: dict[str, t.Any] | None = None) -> None:
+    def __init__(self, 
+                 name: str, 
+                 namespace: str | None = None, 
+                 *, 
+                 id: int = None, 
+                 display_name: str = "", 
+                 hardness: float = None,
+                 tags: dict[str, t.Any] | None = None
+                 ) -> None:
         """Represents a single block type within the game. Without a position or other
         game-based information. The namespace defaults to 'minecraft', however can be
         passed in the constructor. If the namespace is not overriden but the name
@@ -34,14 +44,20 @@ class Block(MinecraftType):
             namespace, name = name.split(":")[:2]
         self.name = name
         self.namespace = namespace or 'minecraft'
+        self.display_name = display_name
+        self.id = id
         self.tags = tags or {}
+    
+    def __hash__(self):
+        return super().__hash__()
+    
+    def __eq__(self, value):
+        if not isinstance(value, Block):
+            return False
+        return self.id == value.id
     
     def to_command_str(self):
         if len(self.tags.keys()) == 0:
             return f"{self.namespace}:{self.name}"
         tag_str = " ".join([f"{tag}={value}" for tag, value in self.tags.items()])
         return f"{self.namespace}:{self.name}[{tag_str}]"
-
-
-class Blocks(Enum):
-    """An enum of all blocks available in the base game."""
