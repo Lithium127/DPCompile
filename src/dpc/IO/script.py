@@ -87,7 +87,6 @@ class Script(PackFile):
     _is_rendered: bool
     
     _parent: ScriptDecoratable
-    _relative_path: Path
     
     def __init__(self, name: str, content: callable | None, *, pass_script: bool = False):
         """Represents a script file within a datapack that can hold commands and operations.
@@ -185,7 +184,7 @@ class Script(PackFile):
     
     @property
     def namespace_name(self) -> str:
-        return f"{self.pack._namespace}:{self.name}"
+        return f"{self.pack._namespace}:{(self.path / self.name).as_posix()}"
 
 
 class RayCastScript(Script):
@@ -371,6 +370,9 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         """
         
         script._parent = self
+        if alternate_path != "":
+            script.path = alternate_path
+        
         self._pack_reference.register_file(
             f"data/{self._pack_reference._namespace}/function{'/'+alternate_path if len(alternate_path) > 0 else ''}",
             script

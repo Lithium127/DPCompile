@@ -2,6 +2,8 @@ from __future__ import annotations
 import typing as t
 import os
 
+from pathlib import Path
+
 from abc import ABC, ABCMeta, abstractmethod
 
 if t.TYPE_CHECKING:
@@ -79,7 +81,7 @@ class PackFile(ABC):
     _is_dev: bool
     extension: str
     name: str
-    path: str
+    _path: Path
     
     def __init__(self, name: str) -> None:
         # TODO: Passing the pack as a reference at init time is not needed as files need to be attached to the pack
@@ -181,6 +183,13 @@ class PackFile(ABC):
         self._p = pack
     
     
+    @property
+    def path(self) -> Path:
+        return self._path
+    
+    @path.setter
+    def path(self, other: str | Path) -> None:
+        self._path = other if isinstance(other, Path) else Path(other)
     
     @property
     def pack(self) -> PackDSL:
