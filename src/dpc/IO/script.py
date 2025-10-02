@@ -4,6 +4,8 @@ import inspect
 
 from abc import ABCMeta
 
+from pathlib import Path
+
 from .packfile import PackFile, FileParentable
 from ..cmd.command import BaseCommand, Comment, CallFunction
 
@@ -83,6 +85,7 @@ class Script(PackFile):
     _is_rendered: bool
     
     _parent: ScriptDecoratable
+    _relative_path: Path
     
     def __init__(self, name: str, content: callable | None, *, pass_script: bool = False):
         """Represents a script file within a datapack that can hold commands and operations.
