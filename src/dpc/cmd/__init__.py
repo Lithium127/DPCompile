@@ -10,3 +10,5 @@ from .command import Comment as Comment
 from .command import Command as Command
 from .command import WrapComment as WrapComment
 from .command import CallFunction as CallFunction
+
+# Composite Commands
