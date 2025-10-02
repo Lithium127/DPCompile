@@ -12,6 +12,7 @@ class Block(MinecraftType):
     namespace: str
     name: str
     display_name: str
+    hardness: float
     
     tags: dict[str, t.Any]
     
@@ -20,7 +21,7 @@ class Block(MinecraftType):
                  namespace: str | None = None, 
                  *, 
                  id: int = None, 
-                 display_name: str = "", 
+                 display_name: str = None, 
                  hardness: float = None,
                  tags: dict[str, t.Any] | None = None
                  ) -> None:
@@ -46,6 +47,7 @@ class Block(MinecraftType):
         self.namespace = namespace or 'minecraft'
         self.display_name = display_name
         self.id = id
+        self.hardness = hardness
         self.tags = tags or {}
     
     def __hash__(self):
