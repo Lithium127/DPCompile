@@ -37,6 +37,5 @@ with PackDSL(
     @pack.mcfn(sort="load")
     def load():
         cmd.Log.info("Pack loaded")
-        
         oak.spawn()
         birch.propogate()

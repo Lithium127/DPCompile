@@ -370,8 +370,7 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         """
         
         script._parent = self
-        if alternate_path != "":
-            script.path = alternate_path
+        script.path = alternate_path
         
         self._pack_reference.register_file(
             f"data/{self._pack_reference._namespace}/function{'/'+alternate_path if len(alternate_path) > 0 else ''}",
