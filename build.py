@@ -8,8 +8,8 @@ class TreeModule(Module):
     
     split_angle: int
     
-    def __init__(self, name: str, split_angle: int):
-        super().__init__(name)
+    def __init__(self, name: str, split_angle: int, **kwargs):
+        super().__init__(name, **kwargs, mnt_path="trees")
         self.split_angle = split_angle
     
     @modulemethod()
@@ -31,12 +31,12 @@ with PackDSL(
         dev = True
     ) as pack:
     
-    test = TreeModule("oak", 60)
-    pack.mount(test, "trees")
+    oak = TreeModule("oak", 60, parent = pack)
+    birch = TreeModule("birch", 78, parent = pack)
     
     @pack.mcfn(sort="load")
     def load():
         cmd.Log.info("Pack loaded")
-        # Causes problems, not replaced with call to Script.__call__() which produces the
-        # `function <path_to_script>` command
-        test.spawn()
+        
+        oak.spawn()
+        birch.propogate()
