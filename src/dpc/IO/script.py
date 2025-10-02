@@ -11,8 +11,11 @@ from ..cmd.command import BaseCommand, Comment, CallFunction
 
 
 class ScriptError(Exception):
-    script: Script = None
-    pass
+    script: Script
+
+    def __init__(self, script: Script = None, *args):
+        super().__init__(*args)
+        self.script = script
 
 
 class ScriptContext:
@@ -42,8 +45,7 @@ class ScriptContext:
         self._writable = False
         BaseCommand._pop_context()
         if exc:
-            new_exc = ScriptError(f"{exc_type.__name__} while rendering script {self.script.full_name}")
-            new_exc.script = self.script
+            new_exc = ScriptError(self.script, f"{exc_type.__name__} while rendering script {self.script.full_name}")
             raise new_exc from exc
         return False
     
