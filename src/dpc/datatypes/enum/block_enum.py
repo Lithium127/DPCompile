@@ -1,8 +1,6 @@
-from enum import Enum
-
 from .. import Block
 
-class Blocks(Enum):
+class Blocks():
 	AIR = Block(id = 0, name = "air", display_name = "Air", hardness = 0.0)
 	STONE = Block(id = 1, name = "stone", display_name = "Stone", hardness = 1.5)
 	GRANITE = Block(id = 2, name = "granite", display_name = "Granite", hardness = 1.5)

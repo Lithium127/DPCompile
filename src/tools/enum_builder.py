@@ -36,8 +36,8 @@ with open(BLOCK_ENUM_PATH, "w") as writer:
 
 with open(BLOCK_ENUM_PATH, "a") as writer:
     indent = 0
-    writer.write("from enum import Enum\n\nfrom .. import Block\n\n")
-    writer.write("class Blocks(Enum):\n")
+    writer.write("from .. import Block\n\n")
+    writer.write("class Blocks():\n")
     indent = 1
 
     for entry in data:

@@ -58,6 +58,9 @@ class Block(MinecraftType):
             return False
         return self.id == value.id
     
+    def __str__(self):
+        return self.to_command_str()
+    
     def to_command_str(self):
         if len(self.tags.keys()) == 0:
             return f"{self.namespace}:{self.name}"
