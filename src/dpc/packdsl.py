@@ -308,6 +308,7 @@ class PackDSL(ScriptDecoratable):
         self._modules.append(module)
         module._root_dir = path
         module._parent = self
+        module._collect_scripts()
         
         
     @property
