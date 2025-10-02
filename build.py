@@ -1,8 +1,6 @@
-from src.dpc import PackDSL, cmd, Scoreboard, Selector, ScoreCriteria, Module, modulemethod, Script
+from src.dpc import PackDSL, cmd, Scoreboard, Selector, ScoreCriteria, Module, modulemethod, Script, Blocks
 
 LOCAL_BUILD_PATH = "C:\\Users\\Liam\\Documents\\Personal Projects\\Python\\DPCompile"
-
-print(__package__)
 
 class TreeModule(Module):
     
@@ -37,5 +35,6 @@ with PackDSL(
     @pack.mcfn(sort="load")
     def load():
         cmd.Log.info("Pack loaded")
+        cmd.Log.warn(f"Warning for {Blocks.STONE_BRICKS}")
         oak.spawn()
         birch.propogate()
