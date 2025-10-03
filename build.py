@@ -51,5 +51,6 @@ with PackDSL(
     
     @pack.mcfn(dev=True)
     def spawn_tree_at_player():
+        """Spawns a tree at the location of the current player"""
         cmd.Log.info("Spawned tree at player location")
         cmd.Command("execute at @s as @s run " + birch.spawn(register=False).build())
