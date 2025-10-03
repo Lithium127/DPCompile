@@ -153,8 +153,12 @@ class Log(BaseCommand):
     
     def build(self):
         # TODO: Replace selector with entity selector enum
+        script_name = (self._script.name or 'N/A')
+        if (self._script._parent != self._script.pack):
+            script_name = (f"{self._script._parent.__class__.__name__}.{script_name}")
+        
         instance = TextElement(
-            f"[{self._script.name or 'N/A'} | {self.level}] - {self.msg}", 
+            f"[{script_name} | {self.level}] - {self.msg}", 
             color = Log._COLOR_MAPPING.get(self.level, TextElement.Colors.WHITE)
         )
         return f"tellraw @a {instance.to_command_str()}"
