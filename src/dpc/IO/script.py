@@ -146,6 +146,8 @@ class Script(PackFile):
                 # Comment(f"File Path: {self._parent}"),
                 "", # Blank line for formatting
             ]
+            if self._is_dev:
+                content.insert(2, Comment("Development Only").build())
             
             script_desc = self._content_func.__doc__
             if script_desc is not None:
