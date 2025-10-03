@@ -48,3 +48,8 @@ with PackDSL(
     def load():
         cmd.Log.info("Pack loaded")
         cmd.Log.warn(f"Warning for {Blocks.STONE_BRICKS}")
+    
+    @pack.mcfn(dev=True)
+    def spawn_tree_at_player():
+        cmd.Log.info("Spawned tree at player location")
+        cmd.Command("execute at @s as @s run " + birch.spawn(register=False).build())

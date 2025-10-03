@@ -114,11 +114,11 @@ class Script(PackFile):
         self._ctx = None
         self._is_rendered = False
     
-    def __call__(self):
+    def __call__(self, **kwargs):
         if BaseCommand._CURRENT_CONTEXT is not None and not BaseCommand._CURRENT_CONTEXT is self.ctx:
             # Case for calling within other functions
             if BaseCommand._CURRENT_CONTEXT.script.pack._build_dev or (not self._is_dev):
-                return self.get_command()
+                return self.get_command(**kwargs)
         # Case for out of context calls
         return self._call_content_function()
     
@@ -159,14 +159,14 @@ class Script(PackFile):
             content.append(Comment(f"No content generated for {self.full_name}", register = False).build())    
         return "\n".join(content)
     
-    def get_command(self) -> CallFunction:
+    def get_command(self, **kwargs) -> CallFunction:
         """Creates and attaches the minecraft 
         executable command that runs this script
 
         Returns:
             CallFunction: The Command that runs this script
         """
-        return CallFunction(self.namespace_name)
+        return CallFunction(self.namespace_name, **kwargs)
     
     @property
     def has_ctx(self) -> None:
