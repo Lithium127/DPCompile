@@ -14,6 +14,15 @@ def modulemethod(name: str = None, *, dev: bool = False, sort: t.Literal['tick',
     and interpreted as a file within the pack. Each instance of a module
     will create all scripts that are contained within it
 
+    Usage:
+    ```python
+    class TestModule(dpc.Module):
+        
+        @modulemethod(sort="load")
+        def setup():
+            ...
+    ```
+
     Args:
             name (str, optional):   The name of the script, if no name is given 
                                     then the name is interpreted from the name 
