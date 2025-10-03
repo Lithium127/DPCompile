@@ -214,9 +214,11 @@ class PackDSL(ScriptDecoratable):
             for file in files:
                 file.write(path)
                 # Development logging of file content to console
-                print(f"\n[{file.full_name}]{(' : Script' + (' instance passed' if file._pass_self else '')) if isinstance(file, Script) else ''}")
-                print(f"  @ <{path}>")
-                print("\n".join([f"  |  {line}" for line in file.render().split("\n")]))
+                content = file.render()
+                if content is not None:
+                    print(f"\n[{file.full_name}]{(' : Script' + (' instance passed' if file._pass_self else '')) if isinstance(file, Script) else ''}")
+                    print(f"  @ <{path}>")
+                    print("\n".join([f"  |  {line}" for line in content.split("\n")]))
     
     
     def with_plugins(self, plugins: list) -> PackDSL:

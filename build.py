@@ -1,4 +1,4 @@
-from src.dpc import PackDSL, cmd, Scoreboard, Selector, ScoreCriteria, Module, modulemethod, Script, Blocks
+from src.dpc import PackDSL, cmd, Module, modulemethod, Script, Blocks
 
 LOCAL_BUILD_PATH = "C:\\Users\\Liam\\Documents\\Personal Projects\\Python\\DPCompile"
 
@@ -12,10 +12,22 @@ class TreeModule(Module):
     
     @modulemethod()
     def spawn(self):
+        """Spawns a tree at the current position"""
         cmd.Log.info(f"Spawned tree of type [{self._module_name}]")
     
     @modulemethod()
+    def place_foliage(self):
+        """Places a randomly generated leaf at this location"""
+        cmd.Log.info("Placing some kind of leaf here")
+    
+    @modulemethod()
+    def place_vines(self):
+        """Grows vines downward from targeted logs"""
+        # cmd.Comment("")
+    
+    @modulemethod()
     def propogate(self):
+        """Recursive call for generating """
         cmd.Comment("This is where the recursing call for generating tree segments works")
         cmd.Comment(f"Split angle: {self.split_angle}")
         
@@ -36,5 +48,3 @@ with PackDSL(
     def load():
         cmd.Log.info("Pack loaded")
         cmd.Log.warn(f"Warning for {Blocks.STONE_BRICKS}")
-        oak.spawn()
-        birch.propogate()
