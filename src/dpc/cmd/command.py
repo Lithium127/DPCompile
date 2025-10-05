@@ -23,6 +23,10 @@ class Command(BaseCommand):
     def __init__(self, content: str, **kwargs):
         """A literal command without structure, returns
         the base string passed to the command when built.
+
+        This class exists for implementing custom commands
+        or literals that should be appended to the resulting
+        file without the need for excessive classes.
         
         ```python
         cmd = Command("This is a test command")
@@ -56,7 +60,7 @@ class Comment(BaseCommand):
 
 
 class CallFunction(BaseCommand):
-    """Command that calls another function as a namespace and path"""
+    """Command that calls another function using a namespace and path"""
     
     target_name: str
     
@@ -77,21 +81,6 @@ class CallFunction(BaseCommand):
     
     def build(self):
         return f"function {self.target_name}"
-
-class WrapComment(BaseCommandContext):
-    
-    content: tuple[str, str]
-    
-    def __init__(self, start: str, end: str):
-        self.content = (start, end)
-        
-    def __enter__(self):
-        Comment(self.content[0])
-        return self
-    
-    def __exit__(self, exc_type, exc, tb):
-        Comment(self.content[1])
-        return True
 
 
 class Log(BaseCommand):
