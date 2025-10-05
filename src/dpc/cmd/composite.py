@@ -2,6 +2,16 @@
 A collection of shorthand commands or custom commands that wrap multiple
 different command instances together. Requires that Command 
 """
+from __future__ import annotations
+import typing as t
+
+
+from .bases import BaseCommand
+
+from ..datatypes import TextElement
+
+if t.TYPE_CHECKING:
+    from ..IO.script import Script
 
 
 class Log(BaseCommand):
