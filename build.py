@@ -1,7 +1,7 @@
 from src.dpc import PackDSL, cmd, Module, modulemethod, Script, Blocks
 
 LOCAL_BUILD_PATH = "C:\\Users\\Liam\\Documents\\Personal Projects\\Python\\DPCompile"
-WORLD_BUILD_PATH = "C:\\Users\\Liam\\curseforge\\minecraft\\Instances\\Stoneworks Profile\\saves\\DP Testing\\datapacks"
+# WORLD_BUILD_PATH = "C:\\Users\\Liam\\curseforge\\minecraft\\Instances\\Stoneworks Profile\\saves\\DP Testing\\datapacks"
 
 class TreeModule(Module):
     
@@ -24,7 +24,24 @@ class TreeModule(Module):
     @modulemethod()
     def place_vines(self):
         """Grows vines downward from targeted logs"""
-        # cmd.Comment("")
+        cmd.Comment(f"Testing command with build issues:\n {cmd.TellRaw('a', cmd.Comment('this is a test').build())}")
+
+        """ This method has problems
+        Currently commands passed as arguments caught as if they were in the
+        code structure of the function itself, however this is undesirable as
+        the content of these commands will be added multiple times
+
+        Example Output:
+            # This script was automatically generated for [Testing Pack]
+            # MC Version: 1.21.4 [61]
+            # ---
+            # Grows vines downward from targeted logs
+
+            # this is a test
+            tellraw @a {"text": "# this is a test"}
+            # Testing command with build issues:
+            #  <src.dpc.cmd.command.TellRaw object at 0x0000016D9DD4F100>
+        """
     
     @modulemethod()
     def propogate(self):
@@ -38,7 +55,7 @@ with PackDSL(
         "Testing Pack", "tcev", 
         "This is a test description", 
         "1.21.4",
-        WORLD_BUILD_PATH,
+        LOCAL_BUILD_PATH,
         dev = True
     ) as pack:
     

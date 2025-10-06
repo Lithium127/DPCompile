@@ -9,6 +9,7 @@ if t.TYPE_CHECKING:
     from ..IO.script import ScriptContext, Script
     from ..packdsl import PackDSL
 
+
 def get_current_pack() -> PackDSL:
     if BaseCommand._CURRENT_CONTEXT is None:
         raise ValueError("get_current_pack() called without PackDSL context being attached")
@@ -109,6 +110,7 @@ class BaseCommand(ABC):
         BaseCommand._CURRENT_CONTEXT = None
 
 class BaseCommandContext(ABC):
+    """A command that operates within a context"""
     
     @abstractmethod
     def __enter__(self) -> BaseCommandContext:
