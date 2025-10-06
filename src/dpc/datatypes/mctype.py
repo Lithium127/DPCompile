@@ -50,25 +50,3 @@ def ensure_mctype(val: t.Any) -> MinecraftType:
     if isinstance(val, MinecraftType):
         return val
     return Literal(val)
-
-# Non-MinecraftType classes
-from .version import Version as Version
-from .version import Versionable as Versionable
-from .version import VersionError as VersionError
-from .version import VersionRange as VersionRange
-
-# Other pack imports
-from .block import Block as Block
-# from .block import Blocks as Blocks
-from .position import Position as Position
-from .textelement import TextElement as TextElement
-from .textelement import to_textelement as to_textelement
-from .selector import Selector as Selector
-from .selector import ensure_selector as ensure_selector
-
-# Command dependent datatypes
-from .scoreboard import ScoreCriteria as ScoreCriteria
-from .scoreboard import Scoreboard as Scoreboard
-from .scoreboard import ScoreboardClosure as ScoreboardClosure
-
-from .enum.block_enum import Blocks

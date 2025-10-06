@@ -5,7 +5,7 @@ from enum import Enum
 import json
 
 from .jsonfile import JsonFile
-from ..datatypes import Version, VersionError
+from ..datatypes.version import Version, VersionError
 
 
 class Feature(Enum):

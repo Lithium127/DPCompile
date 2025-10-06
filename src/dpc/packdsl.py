@@ -10,10 +10,10 @@ from collections import defaultdict
 from .IO.mcmeta import McMeta
 from .IO.script import Script, ScriptDecoratable, ScriptError
 from .IO.tagtable import TagTable
-from .datatypes import Version
+from .datatypes.version import Version
 
-from .cmd.command import Comment
-from .datatypes import Scoreboard
+from .cmd.bases import Comment
+from .datatypes.scoreboard import Scoreboard
 
 
 if t.TYPE_CHECKING:

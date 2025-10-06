@@ -4,17 +4,11 @@ from enum import Enum
 
 from .selector import ensure_selector
 
-from ..cmd.command import Command, BaseCommand
+from ..cmd.bases import Command, BaseCommand, get_current_pack
 
 if t.TYPE_CHECKING:
     from ..packdsl import PackDSL
     from .selector import Selector
-
-# TODO: Move to command.py
-def get_current_pack() -> PackDSL:
-    if BaseCommand._CURRENT_CONTEXT is None:
-        raise ValueError("Pack not set")
-    return BaseCommand._CURRENT_CONTEXT.script.pack
 
 
 class ScoreCriteria:

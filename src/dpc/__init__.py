@@ -74,23 +74,25 @@ from .IO.tagtable import TagTable as TagTable
 from .IO.textfile import TextFile as TextFile
 
 # Core Datatypes
-from .datatypes import MinecraftType as MinecraftType
-from .datatypes import ensure_mctype as ensure_mctype
-from .datatypes import Literal as Literal
-from .datatypes import Version as Version
-from .datatypes import Versionable as Versionable
-from .datatypes import VersionRange as VersionRange
-from .datatypes import ScoreCriteria as ScoreCriteria
-from .datatypes import Scoreboard as Scoreboard
-from .datatypes import ScoreboardClosure as ScoreboardClosure
+from .datatypes.mctype import MinecraftType as MinecraftType
+from .datatypes.mctype import ensure_mctype as ensure_mctype
+from .datatypes.literal import Literal as Literal
+from .datatypes.version import Version as Version
+from .datatypes.version import Versionable as Versionable
+from .datatypes.version import VersionRange as VersionRange
+from .datatypes.scoreboard import ScoreCriteria as ScoreCriteria
+from .datatypes.scoreboard import Scoreboard as Scoreboard
+from .datatypes.scoreboard import ScoreboardClosure as ScoreboardClosure
 
 # MinecraftType Datatypes
-from .datatypes import Block as Block
-from .datatypes import Blocks as Blocks
-from .datatypes import Position as Position
-from .datatypes import TextElement as TextElement
-from .datatypes import Selector as Selector
-from .datatypes import ensure_selector as ensure_selector
+from .datatypes.block import Block as Block
+from .datatypes.position import Position as Position
+from .datatypes.textelement import TextElement as TextElement
+from .datatypes.selector import Selector as Selector
+from .datatypes.selector import ensure_selector as ensure_selector
+
+# MinecraftType Enums
+from .datatypes.enum.block_enum import Blocks as Blocks
 
 # Commands
 from . import cmd as cmd

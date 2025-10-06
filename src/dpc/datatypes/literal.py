@@ -1,7 +1,7 @@
 from __future__ import annotations
 import typing as t
 
-from . import MinecraftType
+from .mctype import MinecraftType
 
 class Literal(MinecraftType):
     """Represents a literal datatype than can be added to a command."""

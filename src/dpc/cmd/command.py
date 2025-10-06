@@ -5,51 +5,13 @@ checking errors at build time.
 from __future__ import annotations
 import typing as t
 
-from .bases import BaseCommand
+from .bases import BaseCommand, Command
 
+from ..datatypes.selector import ensure_selector
+from ..datatypes.textelement import TextElement
 
-class Command(BaseCommand):
-    """A literal command without structure, appending
-    its content directly to a script."""
-    
-    content: str
-    
-    def __init__(self, content: str, **kwargs):
-        """A literal command without structure, returns
-        the base string passed to the command when built.
-
-        This class exists for implementing custom commands
-        or literals that should be appended to the resulting
-        file without the need for excessive classes.
-        
-        ```python
-        cmd = Command("This is a test command")
-        cmd.build() # > str('This is a test command')
-        ```
-
-        Args:
-            content (str): The content of the command
-        """
-        super().__init__(**kwargs)
-        self.content = content
-    
-    def build(self):
-        return self.content
-
-class Comment(BaseCommand):
-    """A comment within a script, for developer notes"""
-    
-    content: str
-    
-    def __init__(self, content: str, **kwargs):
-        super().__init__(**kwargs)
-        self.content = content
-    
-    def build(self):
-        if "\n" in self.content:
-            return "\n".join([f"# {line}" for line in self.content.split("\n")])
-        return f"# {self.content}"
-
+if t.TYPE_CHECKING:
+    from ..datatypes.selector import Selector, SelectorLiteral
 
 
 
@@ -58,7 +20,7 @@ class CallFunction(BaseCommand):
     
     target_name: str
     
-    def __init__(self, target_name: str, **kwargs):
+    def __init__(self, script: t.Any, **kwargs):
         """Creates a call to a function with the given
         name. Names must consist of a namespace and a
         path to the function that includes the name of
@@ -71,13 +33,30 @@ class CallFunction(BaseCommand):
             target_name (str): _description_
         """
         super().__init__(**kwargs)
-        self.target_name = target_name
+        self.target_name = script
     
     def build(self):
         return f"function {self.target_name}"
 
 
 class TellRaw(BaseCommand):
-    pass
+    """Sends a TextElement message to players"""
+    
+    target: Selector
+    content: TextElement
 
+    def __init__(self, target: Selector | SelectorLiteral, content: TextElement | str, **kwargs):
+        """Sends a TextElement message to players
+
+        Args:
+            target (Selector | str): _description_
+            content (TextElement | str): _description_
+        """
+        super().__init__(**kwargs)
+
+        self.target = ensure_selector(target)
+        self.content = TextElement(content)
+
+    def build(self):
+        return f"tellraw {self.target.to_command_str()} {self.content.to_command_str()}"
 

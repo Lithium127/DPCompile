@@ -7,7 +7,8 @@ from abc import ABCMeta
 from pathlib import Path
 
 from .packfile import PackFile, FileParentable
-from ..cmd.command import BaseCommand, Comment, CallFunction
+from ..cmd.bases import BaseCommand, Comment
+from ..cmd.command import CallFunction
 
 
 class ScriptError(Exception):

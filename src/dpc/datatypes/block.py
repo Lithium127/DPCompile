@@ -3,7 +3,7 @@ import typing as t
 
 from enum import Enum
 
-from . import MinecraftType
+from .mctype import MinecraftType
 
 
 class Block(MinecraftType):

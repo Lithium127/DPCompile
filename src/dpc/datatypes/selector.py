@@ -3,7 +3,7 @@ import typing as t
 
 from enum import Enum
 
-from . import MinecraftType
+from .mctype import MinecraftType
 
 
 def ensure_selector(target: str | Selector) -> Selector:
@@ -36,6 +36,7 @@ class SelectorGroup(Enum):
     CURRENT = "s"
     """`[SelectorGroup]`: Target the currently selected entity that the current command is referencing"""
 
+SelectorLiteral = t.Literal["e", "a", "r", "p", "s"]
 
 class Selector(MinecraftType):
     """Representation of a selection of entities within the minecraft world.
@@ -54,7 +55,7 @@ class Selector(MinecraftType):
     conditions: dict[str, t.Any]
     
     def __init__(self, group: str, conditions: dict[str, t.Any] = {}):
-        self.selector = group
+        self.selector = group.lstrip("@") # Remove any user-given prefix
         self.conditions = conditions
     
     

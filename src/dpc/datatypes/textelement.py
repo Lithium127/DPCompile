@@ -4,7 +4,7 @@ import typing as t
 from enum import Enum
 import json
 
-from . import MinecraftType
+from .mctype import MinecraftType
 
 if t.TYPE_CHECKING:
     from .selector import Selector

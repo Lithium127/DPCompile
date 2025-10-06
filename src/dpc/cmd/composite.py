@@ -7,8 +7,9 @@ import typing as t
 
 
 from .bases import BaseCommand
+from . import command as cmd
 
-from ..datatypes import TextElement
+from ..datatypes.textelement import TextElement
 
 if t.TYPE_CHECKING:
     from ..IO.script import Script
@@ -81,4 +82,10 @@ class Log(BaseCommand):
             f"[{script_name} | {self.level}] - {self.msg}", 
             color = Log._COLOR_MAPPING.get(self.level, TextElement.Colors.WHITE)
         )
-        return f"tellraw @a {instance.to_command_str()}"
+        return cmd.TellRaw("a", instance).build()
+
+
+class ExecuteRandom(BaseCommand):
+
+    def __init__(self, register = True, dev = False):
+        super().__init__(register, dev)

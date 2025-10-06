@@ -1,4 +1,4 @@
-from .. import Block
+from ..block import Block
 
 class Blocks():
 	AIR = Block(id = 0, name = "air", display_name = "Air", hardness = 0.0)

@@ -1,6 +1,7 @@
 from src.dpc import PackDSL, cmd, Module, modulemethod, Script, Blocks
 
 LOCAL_BUILD_PATH = "C:\\Users\\Liam\\Documents\\Personal Projects\\Python\\DPCompile"
+WORLD_BUILD_PATH = "C:\\Users\\Liam\\curseforge\\minecraft\\Instances\\Stoneworks Profile\\saves\\DP Testing\\datapacks"
 
 class TreeModule(Module):
     
@@ -37,7 +38,7 @@ with PackDSL(
         "Testing Pack", "tcev", 
         "This is a test description", 
         "1.21.4",
-        LOCAL_BUILD_PATH,
+        WORLD_BUILD_PATH,
         dev = True
     ) as pack:
     
@@ -47,7 +48,6 @@ with PackDSL(
     @pack.mcfn(sort="load")
     def load():
         cmd.Log.info("Pack loaded")
-        cmd.Log.warn(f"Warning for {Blocks.STONE_BRICKS}")
     
     @pack.mcfn(dev=True)
     def spawn_tree_at_player():

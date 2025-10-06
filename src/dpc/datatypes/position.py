@@ -2,7 +2,7 @@ from __future__ import annotations
 import typing as t
 from enum import Enum
 
-from . import MinecraftType
+from .mctype import MinecraftType
 
 
 class _PositionMode(Enum):
