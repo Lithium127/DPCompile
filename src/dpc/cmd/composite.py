@@ -86,6 +86,13 @@ class Log(BaseCommand):
 
 
 class ExecuteRandom(BaseCommand):
+    """Selects a random command from given options"""
 
-    def __init__(self, register = True, dev = False):
-        super().__init__(register, dev)
+    options: list[BaseCommand]
+
+    def __init__(self, *options: BaseCommand, **kwargs):
+        super().__init__(**kwargs)
+        self.options = list(*options)
+    
+    def build(self):
+        return cmd.TellRaw("a", "test")
