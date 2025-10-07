@@ -1,7 +1,10 @@
+import os
 from src.dpc import PackDSL, cmd, Module, modulemethod, Script, Blocks
 
-LOCAL_BUILD_PATH = "C:\\Users\\Liam\\Documents\\Personal Projects\\Python\\DPCompile"
-# WORLD_BUILD_PATH = "C:\\Users\\Liam\\curseforge\\minecraft\\Instances\\Stoneworks Profile\\saves\\DP Testing\\datapacks"
+LOCAL_BUILD_PATH = os.environ.get("LOCAL_BUILD_PATH")
+WORLD_BUILD_PATH = os.environ.get("WORLD_BUILD_PATH")
+
+print(LOCAL_BUILD_PATH)
 
 class TreeModule(Module):
     
