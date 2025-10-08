@@ -27,7 +27,7 @@ class TagTable(JsonFile):
     _sort: str
     replace: bool
     
-    def __init__(self, sort: t.Literal['block', 'function'], name: str, entries: list[str] | None = None, *, namespace: str | None = None, replace: bool = False, indent = 4):
+    def __init__(self, sort: t.Literal['block', 'function'], name: str, entries: list[str] | None = None, *, namespace: str | None = None, replace: bool = False, indent: int = 4):
         """Represents a table of tagged datatypes that can be referenced by
         functions and commands within a datapack. Tables can include
         refernces to other tables, as well as blocks and entities
@@ -89,6 +89,18 @@ class TagTable(JsonFile):
     
     def __iter__(self) -> t.Iterator[str]:
         return iter(self._values)
+    
+    @classmethod
+    def block_table(cls, name: str, entries: list[str] | None = None, *, namespace: str | None = None, replace: bool = False, indent: int = 4):
+        instance = super().__new__(cls)
+        instance.__init__('block', entries, namespace=namespace, replace=replace, indent=indent)
+        return instance
+    
+    @classmethod
+    def block_table(cls, name: str, entries: list[str] | None = None, *, namespace: str | None = None, replace: bool = False, indent: int = 4):
+        instance = super().__new__(cls)
+        instance.__init__('function', entries, namespace=namespace, replace=replace, indent=indent)
+        return instance
     
     @property
     def namespace(self) -> str:
