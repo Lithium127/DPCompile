@@ -64,8 +64,10 @@ class TextElement(MinecraftType):
                 value = hex(int)
             return f"hex({value})"
 
-def to_textelement(value: str | MinecraftType) -> TextElement:
+def to_textelement(value: str | MinecraftType) -> TextElement | None:
     """Convert a string to a JSON text element for command inputs"""
     if isinstance(value, TextElement):
         return value
+    if value is None:
+        return None
     return TextElement(text=str(value))

@@ -64,6 +64,8 @@ from .module import Module as Module
 from .module import modulemethod as modulemethod
 
 # File IO
+from .IO.advancement import Advancement as Advancement
+from .IO.advancement import mc_advancement as mc_advancement
 from .IO.jsonfile import JsonFile as JsonFile
 from .IO.mcmeta import McMeta as McMeta
 from .IO.packfile import PackFile as PackFile

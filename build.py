@@ -1,5 +1,5 @@
 import os
-from src.dpc import PackDSL, cmd, Module, modulemethod, Script, Blocks
+from src.dpc import PackDSL, cmd, Module, modulemethod, Script, Blocks, mc_advancement
 
 LOCAL_BUILD_PATH = os.environ.get("LOCAL_BUILD_PATH")
 WORLD_BUILD_PATH = os.environ.get("WORLD_BUILD_PATH")
@@ -74,3 +74,8 @@ with PackDSL(
         """Spawns a tree at the location of the current player"""
         cmd.Log.info("Spawned tree at player location")
         cmd.Command("execute at @s as @s run " + birch.spawn(register=False).build())
+
+@mc_advancement()
+def enter_nether(instance):
+    """Description is pulled from here"""
+    print()
