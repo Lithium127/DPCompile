@@ -27,7 +27,7 @@ class TreeModule(Module):
     @modulemethod()
     def place_vines(self):
         """Grows vines downward from targeted logs"""
-        cmd.Comment(f"Testing command with build issues:\n {cmd.TellRaw('a', cmd.Comment('this is a test').build())}")
+        cmd.Comment(f"Testing command with build issues:\n {cmd.TellRaw('a', cmd.TellRaw('a', 'this is a test').build())}")
 
         """ This method has problems
         Currently commands passed as arguments caught as if they were in the
