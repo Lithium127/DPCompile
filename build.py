@@ -17,4 +17,4 @@ with PackDSL(
 
     @pack.mcfn(sort="load")
     def load():
-        cmd.Comment(f"Testing comment")
+        cmd.Comment(f"Run this command instead [{cmd.TellRaw('a', 'This is a test')}]")

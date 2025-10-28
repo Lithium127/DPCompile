@@ -157,7 +157,9 @@ class Script(PackFile):
                 content.append("")
             
             for cmd in self.ctx.data:
-                content.append(cmd.build())
+                render = cmd._build_for_script()
+                if render is not None:
+                    content.append(render)
         else:
             content.append(Comment(f"No content generated for {self.full_name}", register = False).build())    
         return "\n".join(content)

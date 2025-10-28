@@ -38,16 +38,25 @@ class BaseCommand(ABC):
     _VERSION_RANGE: tuple[Version, Version]
     
     is_dev: bool
+    masked: bool
+    """Wether or not this command should be omitted from the final 
+    build. Used when passing commands as arguments into other 
+    commands"""
     
     def __init__(self, register: bool = True, dev: bool = False) -> None:
         """Initializes a command, registering it to a context
-        if one is available and the register flag is true
+        if one is available and the register flag is true.
 
         Args:
             register (bool, optional): If this command should be registered. Defaults to True.
+            dev (bool, optional): If this command is development only. Development only commands
+                                  are omitted from the render when building in production mode. 
+                                  Defaults to False.
         """
         # All commands are not dev-only unless otherwise stated
         self.is_dev = dev
+        # All commands are default marked non-masked
+        self.is_masked = False
         
         if BaseCommand._CURRENT_CONTEXT is not None and register:
             if BaseCommand._CURRENT_CONTEXT.script.pack._build_dev or (not self.is_dev):
@@ -58,6 +67,24 @@ class BaseCommand(ABC):
         cls._VERSION_RANGE = (min_version or Version.min(), max_version or Version.max())
         return super().__init_subclass__()
     
+    def __str__(self) -> str:
+        # Mask commands that have been converted to strings to avoid repeats. 
+        # This will not work for commands passed as other arguments
+        self.mask() = True
+        return self.build()
+
+    def _build_for_script(self) -> str | None:
+        """Builds a command for insertion into a script.
+        If this returns `None` the command is ommitted
+        from the final render
+
+        Returns:
+            str | None: The result of the built command or None.
+        """
+        if self.is_masked:
+            return None
+        return self.build()
+
     @abstractmethod
     def build(self) -> str:
         """build the content of this command as a single
@@ -89,6 +116,13 @@ class BaseCommand(ABC):
                     argument positions for this command
         """
         return True
+    
+    def mask(self) -> None:
+        """Permenantly marks this command as `masked`. 
+        Omitting it from the final render. Running this
+        method multiple times does not have any effect
+        """
+        self.is_masked = True
     
     @classmethod
     def _set_context(cls, ctx: ScriptContext) -> None:
