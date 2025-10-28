@@ -17,4 +17,4 @@ with PackDSL(
 
     @pack.mcfn(sort="load")
     def load():
-        cmd.Comment('Hello, World!')
+        cmd.Comment(cmd.Log("Pack Loaded!"))

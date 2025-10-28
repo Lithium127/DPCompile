@@ -117,12 +117,16 @@ class BaseCommand(ABC):
         """
         return True
     
-    def mask(self) -> None:
+    def mask(self) -> BaseCommand:
         """Permenantly marks this command as `masked`. 
         Omitting it from the final render. Running this
         method multiple times does not have any effect
+
+        Returns:
+            BaseCommand: The instance that was masked.
         """
         self.is_masked = True
+        return self
     
     @classmethod
     def _set_context(cls, ctx: ScriptContext) -> None:
@@ -190,7 +194,7 @@ class Comment(BaseCommand):
     
     def __init__(self, content: str, **kwargs):
         super().__init__(**kwargs)
-        self.content = content
+        self.content = str(content)
     
     def build(self):
         if "\n" in self.content:

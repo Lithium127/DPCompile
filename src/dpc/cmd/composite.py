@@ -82,7 +82,7 @@ class Log(BaseCommand):
             f"[{script_name} | {self.level}] - {self.msg}", 
             color = Log._COLOR_MAPPING.get(self.level, TextElement.Colors.WHITE)
         )
-        return cmd.TellRaw("a", instance).build()
+        return cmd.TellRaw("a", instance).mask().build()
 
 
 class ExecuteRandom(BaseCommand):
