@@ -86,6 +86,8 @@ from .datatypes.scoreboard import ScoreboardClosure as ScoreboardClosure
 
 # MinecraftType Datatypes
 from .datatypes.block import Block as Block
+from .datatypes.item import Item as Item
+from .datatypes.item import ItemData as ItemData
 from .datatypes.position import Position as Position
 from .datatypes.textelement import TextElement as TextElement
 from .datatypes.selector import Selector as Selector
@@ -93,6 +95,7 @@ from .datatypes.selector import ensure_selector as ensure_selector
 
 # MinecraftType Enums
 from .datatypes.enum.block_enum import Blocks as Blocks
+from .datatypes.enum.item_enum import Items as Items
 
 # Commands
 from . import cmd as cmd

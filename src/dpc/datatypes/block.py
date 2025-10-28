@@ -1,7 +1,6 @@
 from __future__ import annotations
 import typing as t
 
-from enum import Enum
 
 from .mctype import MinecraftType
 
@@ -18,9 +17,9 @@ class Block(MinecraftType):
     
     def __init__(self, 
                  name: str, 
-                 namespace: str | None = None, 
                  *, 
                  id: int = None, 
+                 namespace: str | None = None, 
                  display_name: str = None, 
                  hardness: float = None,
                  tags: dict[str, t.Any] | None = None
