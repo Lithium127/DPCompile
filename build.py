@@ -17,4 +17,9 @@ with PackDSL(
 
     @pack.mcfn(sort="load")
     def load():
-        cmd.Comment(cmd.Log("Pack Loaded!"))
+        cmd.Comment(cmd.Log(f"Pack Loaded!, running startup script {initialize()}"))
+    
+    @pack.mcfn()
+    def initialize(script):
+        """Performs required startup for all groups"""
+        cmd.Log(f"Running initialization...").dev()

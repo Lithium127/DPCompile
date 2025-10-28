@@ -76,7 +76,10 @@ class BaseCommand(ABC):
     def _build_for_script(self) -> str | None:
         """Builds a command for insertion into a script.
         If this returns `None` the command is ommitted
-        from the final render
+        from the final render. This command is not intended
+        to be run outside of the action of script building
+        and the `BaseCommand.build()` function should be
+        prefered to obtain command content.
 
         Returns:
             str | None: The result of the built command or None.
@@ -91,6 +94,12 @@ class BaseCommand(ABC):
         string without line breaks. The usage dictates that
         the string returned by this be interpretable by the
         .mcfunction filetype.
+
+        If this method is being run manually on a floating
+        instance, it is recommended to use the `str()` type
+        or to run the commands `__str__()` method to mark the
+        command as masked automatically and omit its content
+        from the final render.
         
         > This function can be run multiple times, meaning it should
         not directly modify any attributes of classes in an additive
@@ -126,6 +135,19 @@ class BaseCommand(ABC):
             BaseCommand: The instance that was masked.
         """
         self.is_masked = True
+        return self
+    
+    def dev(self, value=True) -> BaseCommand:
+        """Makes a command's `is_dev` flag equal to the value
+        of the argument.
+
+        Args:
+            value (bool, optional): If this command is dev or not. Defaults to True.
+
+        Returns:
+            BaseCommand: The instance being set
+        """
+        self.is_dev = value
         return self
     
     @classmethod
