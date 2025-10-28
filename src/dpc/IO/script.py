@@ -141,28 +141,30 @@ class Script(PackFile):
         content = []
         
         if len(self.ctx.data) > 0:
-            content = [
-                Comment(f"This script was automatically generated for [{self.pack._pack_name}]").build(),
-                Comment(f"MC Version: {self.pack.version} [{self.pack.version.pack_reference}]").build(),
-                # Comment(f"File Path: {self._parent}"),
-                "", # Blank line for formatting
-            ]
-            if self._is_dev:
-                content.insert(2, Comment("Development Only").build())
-            
-            script_desc = self._content_func.__doc__
-            if script_desc is not None:
-                content.pop(-1)
-                content.append(Comment(f"---\n{script_desc}").build())
-                content.append("")
-            
             for cmd in self.ctx.data:
                 render = cmd._build_for_script()
                 if render is not None:
                     content.append(render)
-        else:
+        # Check for empty content
+        if len(content) == 0:
             content.append(Comment(f"No content generated for {self.full_name}", register = False).build())    
-        return "\n".join(content)
+        
+        # Generate Preface comments
+        preface = [
+            Comment(f"This script was automatically generated for [{self.pack._pack_name}]").build(),
+            Comment(f"MC Version: {self.pack.version} [{self.pack.version.pack_reference}]").build(),
+            # Comment(f"File Path: {self._parent}"),
+            "", # Blank line for formatting
+        ]
+        if self._is_dev:
+            preface.insert(2, Comment("Development Only").build())
+        
+        script_desc = self._content_func.__doc__
+        if script_desc is not None:
+            preface.insert(-1, Comment(f"---\n{script_desc}").build())
+        
+        preface.extend(content)
+        return "\n".join(preface)
     
     def get_command(self, **kwargs) -> CallFunction:
         """Creates and attaches the minecraft 

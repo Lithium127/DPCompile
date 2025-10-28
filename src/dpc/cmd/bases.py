@@ -70,7 +70,7 @@ class BaseCommand(ABC):
     def __str__(self) -> str:
         # Mask commands that have been converted to strings to avoid repeats. 
         # This will not work for commands passed as other arguments
-        self.mask() = True
+        self.mask()
         return self.build()
 
     def _build_for_script(self) -> str | None:
