@@ -10,7 +10,7 @@ with PackDSL(
         "This is a test description", 
         "1.21.4",
         LOCAL_BUILD_PATH,
-        dev = True
+        dev = False
     ) as pack:
     
     # This is a file definition

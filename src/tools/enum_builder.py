@@ -39,10 +39,18 @@ with open(BLOCK_ENUM_PATH, "a") as writer:
     writer.write("from ..block import Block\n\n")
     writer.write("""
 class BlockMeta(type):
+    def __delattr__(cls, name):
+        raise AttributeError(f"Cannot delete attribute '{name}' from enum {cls.__name__}")
+    
+    def __setattr__(cls, name, val):
+        raise AttributeError(f"Cannot modify attribute '{name}' from enum {cls.__name__}. Attempted value '{val}'")
+    
     def __getattribute__(cls, name):
         data = super().__getattribute__(name)
-        instance = Block(**data)
-        return instance\n\n""")
+        if isinstance(data, dict):
+            instance = Block(**data)
+            return instance
+        return data\n\n""")
     writer.write("class Blocks(metaclass = BlockMeta):\n")
     indent = 1
 

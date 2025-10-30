@@ -2,10 +2,18 @@ from ..block import Block
 
 
 class BlockMeta(type):
+    def __delattr__(cls, name):
+        raise AttributeError(f"Cannot delete attribute '{name}' from enum {cls.__name__}")
+    
+    def __setattr__(cls, name, val):
+        raise AttributeError(f"Cannot modify attribute '{name}' from enum {cls.__name__}. Attempted value '{val}'")
+    
     def __getattribute__(cls, name):
         data = super().__getattribute__(name)
-        instance = Block(**data)
-        return instance
+        if isinstance(data, dict):
+            instance = Block(**data)
+            return instance
+        return data
 
 class Blocks(metaclass = BlockMeta):
 	AIR: Block = {"id" : 0, "name" : "air", "display_name" : "Air", "hardness" : 0.0}

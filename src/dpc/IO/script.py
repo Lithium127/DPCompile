@@ -399,11 +399,12 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
             f"data/{self._pack_reference._namespace}/function{'/'+alternate_path if len(alternate_path) > 0 else ''}",
             script
         )
-        if ticking is not None:
-            self._pack_reference.add_script_to_taglist(
-                script=script,
-                sort = 'tick' if ticking else 'load'
-            )
+        if ticking is not None :
+            if self._pack_reference._build_dev or not script._is_dev:
+                self._pack_reference.add_script_to_taglist(
+                    script=script,
+                    sort = 'tick' if ticking else 'load'
+                )
         # Renders the script proactively for scoreboard discovery
         self._script_collectors.append(script)
     

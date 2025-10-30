@@ -2,10 +2,18 @@ from ..item import Item
 
 
 class ItemMeta(type):
+    def __delattr__(cls, name):
+        raise AttributeError(f"Cannot delete attribute '{name}' from enum {cls.__name__}")
+    
+    def __setattr__(cls, name, val):
+        raise AttributeError(f"Cannot modify attribute '{name}' from enum {cls.__name__}. Attempted value '{val}'")
+    
     def __getattribute__(cls, name):
         data = super().__getattribute__(name)
-        instance = Item(**data)
-        return instance
+        if isinstance(data, dict):
+            instance = Item(**data)
+            return instance
+        return data
 
 class Items(metaclass = ItemMeta):
 	AIR: Item = {"item_number" : 0, "id" : "air", "display_name" : "Air", "namespace" : "minecraft"}
