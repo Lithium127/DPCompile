@@ -12,14 +12,16 @@ with PackDSL(
         "This is a test description", 
         "1.21.4",
         LOCAL_BUILD_PATH,
-        dev = True
+        dev = False
     ) as pack:
 
     @pack.mcfn(sort="load")
     def load():
-        cmd.Comment(cmd.Log(f"Pack Loaded!, running startup script {initialize()}"))
+        cmd.Comment(f"This is where the {initialize} function runs")
+        initialize()
     
-    @pack.mcfn()
+    @pack.mcfn(dev=False)
     def initialize(script):
         """Performs required startup for all groups"""
-        cmd.Log(f"Running initialization...").dev()
+        cmd.Log(f"Running initialization...")
+        initialize()

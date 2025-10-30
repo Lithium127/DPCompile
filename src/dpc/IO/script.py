@@ -81,6 +81,7 @@ class Script(PackFile):
     
     _content_func: callable
     _pass_self: bool
+    _call_depth: int
     _method_instance: object
     
     _ctx: ScriptContext | None
@@ -111,17 +112,28 @@ class Script(PackFile):
         
         self._content_func = content
         self._pass_self = pass_script
+        self._call_depth = 0
         self._method_instance = None
         self._ctx = None
         self._is_rendered = False
     
     def __call__(self, **kwargs):
-        if BaseCommand._CURRENT_CONTEXT is not None and not BaseCommand._CURRENT_CONTEXT is self.ctx:
+        # Run if pack is building commands AND function was called from another location
+        if (BaseCommand._CURRENT_CONTEXT is not None):
             # Case for calling within other functions
-            if BaseCommand._CURRENT_CONTEXT.script.pack._build_dev or (not self._is_dev):
+            if not (BaseCommand._CURRENT_CONTEXT is self.ctx) or (self._call_depth >= 1):
+                # Omit call function if this is considered 'dev' unless otherwise
+                kwargs["dev"] = self._is_dev or kwargs.get("dev", False)
                 return self.get_command(**kwargs)
+        
         # Case for out of context calls
-        return self._call_content_function()
+        self._call_depth += 1 # Depth for recursion checking
+        result = self._call_content_function()
+        self._call_depth -= 1
+        return result
+    
+    def __str__(self) -> str:
+        return self.namespace_name
     
     def _call_content_function(self) -> t.Any:
         args = []

@@ -110,6 +110,9 @@ class PackFile(ABC):
         self.full_name = name
         self._is_dev = False
     
+    def __str__(self) -> str:
+        return self.full_name
+    
 
     @classmethod
     def load_external_resource(cls, path: os.PathLike) -> PackFile:
