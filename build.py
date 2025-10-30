@@ -20,8 +20,7 @@ with PackDSL(
         cmd.Comment(f"This is where the {initialize} function runs")
         initialize()
     
-    @pack.mcfn(dev=False)
+    @pack.mcfn(path="util")
     def initialize(script):
         """Performs required startup for all groups"""
-        cmd.Log(f"Running initialization...")
-        initialize()
+        cmd.Log.info("Initializing via {self}")

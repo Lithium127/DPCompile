@@ -60,8 +60,9 @@ class BaseCommand(ABC):
         
         if BaseCommand._CURRENT_CONTEXT is not None and register:
             if BaseCommand._CURRENT_CONTEXT.script.pack._build_dev or (not self.is_dev):
-                print(f"{BaseCommand._CURRENT_CONTEXT.script.name} Building {type(self)}")
                 BaseCommand._CURRENT_CONTEXT.add_cmd(self)
+            else:
+                BaseCommand._CURRENT_CONTEXT.add_cmd(Comment(f"{self.__class__.__name__} command omitted for production", register=False))
     
     def __init_subclass__(cls, min_version: Version | None = None, max_version: Version | None = None):
         cls._VERSION_RANGE = (min_version or Version.min(), max_version or Version.max())

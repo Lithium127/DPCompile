@@ -259,7 +259,7 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         super().__init__()
         self._script_collectors = []
     
-    def mcfn(self, name: str = None, *, dev: bool = False, sort: t.Literal['tick', 'load'] | None = None) -> callable:
+    def mcfn(self, name: str = None, *, dev: bool = False, sort: t.Literal['tick', 'load'] | None = None, path: Path | str = None) -> callable:
         """Decorates a function to create a script.
         Adds a `.mcfunction` file, or `script`, to the parent object's collectors 
         attribute.
@@ -362,7 +362,11 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         def inner(func: function) -> callable:
             script = self.create_script_from_callable(func, name=name, dev=dev)
             is_ticking = None if sort is None else (sort == 'tick')
-            self.add_script(script, ticking=is_ticking)
+            self.add_script(
+                script, 
+                ticking=is_ticking,
+                alternate_path= path or ""
+            )
             return script
         return inner
     
