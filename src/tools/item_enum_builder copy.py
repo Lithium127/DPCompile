@@ -25,9 +25,9 @@ def load_block(data: dict) -> str:
         val = data.get(val)
         if isinstance(val, str):
             val = f'"{val}"'
-        arguments.append(f"{var} = {val}")
-    arguments.append(f"namespace = \"minecraft\"")
-    return f"{block_name.upper()} = Item({', '.join(arguments)})\n"
+        arguments.append(f"\"{var}\" : {val}")
+    arguments.append(f"\"namespace\" : \"minecraft\"")
+    return block_name.upper() + ": Item = {" + ', '.join(arguments) + "}\n"
 
 with open(DATA_PATH, "r") as reader:
     data = json.load(reader)
@@ -38,7 +38,13 @@ with open(BLOCK_ENUM_PATH, "w") as writer:
 with open(BLOCK_ENUM_PATH, "a") as writer:
     indent = 0
     writer.write("from ..item import Item\n\n")
-    writer.write("class Items():\n")
+    writer.write("""
+class ItemMeta(type):
+    def __getattribute__(cls, name):
+        data = super().__getattribute__(name)
+        instance = Item(**data)
+        return instance\n\n""")
+    writer.write("class Items(metaclass = ItemMeta):\n")
     indent = 1
 
     for entry in data:

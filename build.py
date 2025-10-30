@@ -12,9 +12,7 @@ with PackDSL(
         LOCAL_BUILD_PATH,
         dev = True
     ) as pack:
-
-    Blocks.AIR.name = "Nothing" # This causes problems later
-
+    
     # This is a file definition
     @pack.mcfn(sort="load")
     def load(script):

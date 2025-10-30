@@ -26,7 +26,7 @@ def load_block(data: dict) -> str:
         if isinstance(val, str):
             val = f'"{val}"'
         arguments.append(f"\"{var}\" : {val}")
-    return block_name.upper() + ":Block = " + "{" + ', '.join(arguments) + "}\n"
+    return block_name.upper() + ": Block = {" + ', '.join(arguments) + "}\n"
 
 with open(DATA_PATH, "r") as reader:
     data = json.load(reader)
