@@ -8,6 +8,7 @@ from .packfile import FileParentable
 
 from .jsonfile import JsonFile
 from .packfile import PackFile
+from .script import Script
 
 if t.TYPE_CHECKING:
     from ..packdsl import PackDSL
@@ -125,6 +126,9 @@ class TagTable(JsonFile):
                 content.append(item.table_tag)
                 continue
             if isinstance(item, PackFile):
+                if isinstance(item, Script):
+                    content.append(item.namespace_name)
+                    continue
                 content.append(f"{item.pack._namespace}:{item.name}")
                 continue
             content.append(item)

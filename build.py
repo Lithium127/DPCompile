@@ -15,17 +15,6 @@ with PackDSL(
         dev = False
     ) as pack:
 
-    @pack.mcfn(sort="load")
+    @pack.mcfn(sort="load", path="startup")
     def load():
-        cmd.Comment(f"This is where the {initialize} function runs")
-        initialize()
-    
-    @pack.mcfn(path="util/startup")
-    def initialize(script):
-        """Performs required startup for all groups"""
-        cmd.Log.info("Initializing via {self}")
-    
-    @pack.mcfn(path="util/data")
-    def make_stationary():
-        """Makes a selected entity stationary"""
-        cmd.Log.info("Making entity.current stationary")
+        pass
