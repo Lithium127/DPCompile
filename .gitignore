@@ -162,3 +162,4 @@ cython_debug/
 #.idea/
 
 Testing Pack/
+.ideas.md
