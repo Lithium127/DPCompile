@@ -25,8 +25,8 @@ def load_block(data: dict) -> str:
         val = data.get(val)
         if isinstance(val, str):
             val = f'"{val}"'
-        arguments.append(f"{var} = {val}")
-    return f"{block_name.upper()} = Block({', '.join(arguments)})\n"
+        arguments.append(f"\"{var}\" : {val}")
+    return block_name.upper() + ":Block = " + "{" + ', '.join(arguments) + "}\n"
 
 with open(DATA_PATH, "r") as reader:
     data = json.load(reader)
@@ -36,8 +36,14 @@ with open(BLOCK_ENUM_PATH, "w") as writer:
 
 with open(BLOCK_ENUM_PATH, "a") as writer:
     indent = 0
-    writer.write("from .. import Block\n\n")
-    writer.write("class Blocks():\n")
+    writer.write("from ..block import Block\n\n")
+    writer.write("""
+class BlockMeta(type):
+    def __getattribute__(cls, name):
+        data = super().__getattribute__(name)
+        instance = Block(**data)
+        return instance\n\n""")
+    writer.write("class Blocks(metaclass = BlockMeta):\n")
     indent = 1
 
     for entry in data:

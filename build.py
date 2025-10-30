@@ -1,7 +1,5 @@
 import os
-from src.dpc import PackDSL, cmd, Module, modulemethod, Script, Blocks
-
-from src.dpc.datatypes.enum.item_enum import Items
+from src.dpc import PackDSL, cmd, Module, modulemethod, Script, Blocks, Items
 
 LOCAL_BUILD_PATH = os.environ.get("LOCAL_BUILD_PATH")
 WORLD_BUILD_PATH = os.environ.get("WORLD_BUILD_PATH")
@@ -12,9 +10,14 @@ with PackDSL(
         "This is a test description", 
         "1.21.4",
         LOCAL_BUILD_PATH,
-        dev = False
+        dev = True
     ) as pack:
 
-    @pack.mcfn(sort="load", path="startup")
-    def load():
-        pass
+    Blocks.AIR.name = "Nothing" # This causes problems later
+
+    # This is a file definition
+    @pack.mcfn(sort="load")
+    def load(script):
+        """Initializes scoreboard values for this pack"""
+        cmd.Log.info("Initializing scoreboards")
+        cmd.TellRaw('a', f"Block information for block {Blocks.AIR}")
