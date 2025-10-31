@@ -4,7 +4,6 @@ import os
 import shutil
 from pathlib import Path
 
-from enum import Enum
 from collections import defaultdict
 
 from .IO.mcmeta import McMeta
@@ -12,7 +11,6 @@ from .IO.script import Script, ScriptDecoratable, ScriptError
 from .IO.tagtable import TagTable
 from .datatypes.version import Version
 
-from .cmd.bases import Comment
 from .datatypes.scoreboard import Scoreboard
 
 

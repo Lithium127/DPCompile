@@ -292,7 +292,7 @@ class VersionRange:
         return self._range[1] or Version.max()
     
     @upper.setter
-    def lower(self, value: Version | str | None) -> None:
+    def upper(self, value: Version | str | None) -> None:
         self._range = (self.lower, Version(value) if isinstance(value, str) else value)
 
 class Versionable(object):

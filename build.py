@@ -12,7 +12,7 @@ with PackDSL(
         LOCAL_BUILD_PATH,
         dev = False
     ) as pack:
-    
+
     # This is a file definition
     @pack.mcfn(sort="load")
     def load(script):

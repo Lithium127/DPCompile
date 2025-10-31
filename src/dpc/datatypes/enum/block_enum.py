@@ -1,21 +1,8 @@
 from ..block import Block
+from .metaenum import EnumMeta
 
-
-class BlockMeta(type):
-    def __delattr__(cls, name):
-        raise AttributeError(f"Cannot delete attribute '{name}' from enum {cls.__name__}")
-    
-    def __setattr__(cls, name, val):
-        raise AttributeError(f"Cannot modify attribute '{name}' from enum {cls.__name__}. Attempted value '{val}'")
-    
-    def __getattribute__(cls, name):
-        data = super().__getattribute__(name)
-        if isinstance(data, dict):
-            instance = Block(**data)
-            return instance
-        return data
-
-class Blocks(metaclass = BlockMeta):
+class Blocks(metaclass = EnumMeta):
+	_type_as = Block
 	AIR: Block = {"id" : 0, "name" : "air", "display_name" : "Air", "hardness" : 0.0}
 	STONE: Block = {"id" : 1, "name" : "stone", "display_name" : "Stone", "hardness" : 1.5}
 	GRANITE: Block = {"id" : 2, "name" : "granite", "display_name" : "Granite", "hardness" : 1.5}

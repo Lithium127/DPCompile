@@ -98,7 +98,7 @@ class TagTable(JsonFile):
         return instance
     
     @classmethod
-    def block_table(cls, name: str, entries: list[str] | None = None, *, namespace: str | None = None, replace: bool = False, indent: int = 4):
+    def function_table(cls, name: str, entries: list[str] | None = None, *, namespace: str | None = None, replace: bool = False, indent: int = 4):
         instance = super().__new__(cls)
         instance.__init__('function', entries, namespace=namespace, replace=replace, indent=indent)
         return instance

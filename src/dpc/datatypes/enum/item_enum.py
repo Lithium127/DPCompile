@@ -1,21 +1,8 @@
 from ..item import Item
+from .metaenum import EnumMeta
 
-
-class ItemMeta(type):
-    def __delattr__(cls, name):
-        raise AttributeError(f"Cannot delete attribute '{name}' from enum {cls.__name__}")
-    
-    def __setattr__(cls, name, val):
-        raise AttributeError(f"Cannot modify attribute '{name}' from enum {cls.__name__}. Attempted value '{val}'")
-    
-    def __getattribute__(cls, name):
-        data = super().__getattribute__(name)
-        if isinstance(data, dict):
-            instance = Item(**data)
-            return instance
-        return data
-
-class Items(metaclass = ItemMeta):
+class Items(metaclass = EnumMeta):
+	_type_as = Item
 	AIR: Item = {"item_number" : 0, "id" : "air", "display_name" : "Air", "namespace" : "minecraft"}
 	STONE: Item = {"item_number" : 1, "id" : "stone", "display_name" : "Stone", "namespace" : "minecraft"}
 	GRANITE: Item = {"item_number" : 2, "id" : "granite", "display_name" : "Granite", "namespace" : "minecraft"}

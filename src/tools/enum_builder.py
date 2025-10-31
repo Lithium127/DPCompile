@@ -36,22 +36,9 @@ with open(BLOCK_ENUM_PATH, "w") as writer:
 
 with open(BLOCK_ENUM_PATH, "a") as writer:
     indent = 0
-    writer.write("from ..block import Block\n\n")
-    writer.write("""
-class BlockMeta(type):
-    def __delattr__(cls, name):
-        raise AttributeError(f"Cannot delete attribute '{name}' from enum {cls.__name__}")
-    
-    def __setattr__(cls, name, val):
-        raise AttributeError(f"Cannot modify attribute '{name}' from enum {cls.__name__}. Attempted value '{val}'")
-    
-    def __getattribute__(cls, name):
-        data = super().__getattribute__(name)
-        if isinstance(data, dict):
-            instance = Block(**data)
-            return instance
-        return data\n\n""")
-    writer.write("class Blocks(metaclass = BlockMeta):\n")
+    writer.write("from ..block import Block\n")
+    writer.write("from .metaenum import EnumMeta\n\n")
+    writer.write("class Blocks(metaclass = EnumMeta):\n\t_type_as = Block\n")
     indent = 1
 
     for entry in data:
