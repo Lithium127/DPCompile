@@ -1,8 +1,7 @@
 from ..block import Block
 from .metaenum import EnumMeta
 
-class Blocks(metaclass = EnumMeta):
-	_type_as = Block
+class Blocks(metaclass = EnumMeta[Block]):
 	AIR: Block = {"id" : 0, "name" : "air", "display_name" : "Air", "hardness" : 0.0}
 	STONE: Block = {"id" : 1, "name" : "stone", "display_name" : "Stone", "hardness" : 1.5}
 	GRANITE: Block = {"id" : 2, "name" : "granite", "display_name" : "Granite", "hardness" : 1.5}

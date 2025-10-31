@@ -1,8 +1,7 @@
 from ..item import Item
 from .metaenum import EnumMeta
 
-class Items(metaclass = EnumMeta):
-	_type_as = Item
+class Items(metaclass = EnumMeta[Item]):
 	AIR: Item = {"item_number" : 0, "id" : "air", "display_name" : "Air", "namespace" : "minecraft"}
 	STONE: Item = {"item_number" : 1, "id" : "stone", "display_name" : "Stone", "namespace" : "minecraft"}
 	GRANITE: Item = {"item_number" : 2, "id" : "granite", "display_name" : "Granite", "namespace" : "minecraft"}

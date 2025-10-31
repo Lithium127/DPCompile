@@ -70,6 +70,7 @@ class PackDSL(ScriptDecoratable):
     _namespace: str
     _version: Version # TODO: Replace versioning with a list of buildable versions. Add a property for the current version determined through context
     _plugins: list
+    _error_behavior: str
     _meta: McMeta
     
     build_dir: str
@@ -88,7 +89,6 @@ class PackDSL(ScriptDecoratable):
                  version: Version | str | list[int] | tuple[int, int, int],
                  out_dir: str, # TODO: Automatic directory loading to same location or to game.
                  *,
-                 dev: bool = True,
                  plugins: list | None = None):
         """Represents a full datapack context that loads functions and compiles to set versions.
         
@@ -99,10 +99,8 @@ class PackDSL(ScriptDecoratable):
         
         # Or with builders
         with PackDSL(
-            <namespace>, <desc>, <version>
-        ).with_build_type(
-            PackDSL.OPTIONS.BUILD_DEV
-        ) as pack:
+            <pack_name>, <namespace>, <desc>, <version>, <out_dir>
+        ).build_prod() as pack:
             ...
         ```
         
@@ -140,11 +138,12 @@ class PackDSL(ScriptDecoratable):
         
         self._version = version if isinstance(version, Version) else Version(version)
         self._plugins = plugins or []
+        self._error_behavior = "strict"
         
         
         self.build_dir = Path(out_dir)
         # Default building for development
-        self._build_dev = dev
+        self._build_dev = True
         
         # Scoreboard registry
         self._scoreboards = set()
@@ -164,7 +163,15 @@ class PackDSL(ScriptDecoratable):
             # For user caused errors within pack scope
             # emit error without building
             return False
-        self._build()
+        # Build for each version...
+        try:
+            self._build()
+        except Exception as e:
+            if self._error_behavior == "strict":
+                raise e
+            else:
+                # Print Error to console and continue
+                print(f"{type(e).__name__} error occurred in PackDSL building for version {self.version}. Error handling set to '{self._error_behavior}', continuing with build.")
     
     
     
@@ -230,6 +237,17 @@ class PackDSL(ScriptDecoratable):
         """
         return self
     
+    def with_errors(self, behavior: t.Literal["strict", "ignore"]) -> PackDSL:
+        self._error_behavior = behavior
+        return self
+    
+    def build_dev(self) -> PackDSL:
+        self._build_dev = True
+        return self
+    
+    def build_prod(self) -> PackDSL:
+        self._build_dev = False
+        return self
     
     def add_script_to_taglist(self, script: Script, sort: t.Literal["tick", "load"] = "tick"):
         files: list[PackFile] = self.directory.get_files("data/minecraft/tags/function")
