@@ -65,7 +65,7 @@ class BaseCommand(ABC):
                 BaseCommand._CURRENT_CONTEXT.add_cmd(Comment(f"{self.__class__.__name__} command omitted for production", register=False))
     
     def __init_subclass__(cls, min_version: Version | None = None, max_version: Version | None = None):
-        cls._VERSION_RANGE = (min_version or Version.min(), max_version or Version.max())
+        cls._VERSION_RANGE = (min_version or Version.minimum(), max_version or Version.maximum())
         return super().__init_subclass__()
     
     def __str__(self) -> str:
