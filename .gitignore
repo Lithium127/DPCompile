@@ -163,3 +163,5 @@ cython_debug/
 
 Testing Pack/
 .ideas.md
+
+*/tools/version_files
