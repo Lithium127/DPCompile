@@ -1,6 +1,7 @@
 from __future__ import annotations
 import typing as t
 
+from .version import VersionRange
 
 from .mctype import MinecraftType
 
@@ -12,6 +13,7 @@ class Block(MinecraftType):
     name: str
     display_name: str
     hardness: float
+    version: VersionRange
     
     tags: dict[str, t.Any]
     
@@ -22,7 +24,8 @@ class Block(MinecraftType):
                  namespace: str | None = None, 
                  display_name: str = None, 
                  hardness: float = None,
-                 tags: dict[str, t.Any] | None = None
+                 tags: dict[str, t.Any] | None = None,
+                 versions: VersionRange | tuple[str, str] = None
                  ) -> None:
         """Represents a single block type within the game. Without a position or other
         game-based information. The namespace defaults to 'minecraft', however can be
@@ -48,6 +51,10 @@ class Block(MinecraftType):
         self.id = id
         self.hardness = hardness
         self.tags = tags or {}
+        if versions is not None:
+            self.version = versions if isinstance(versions, VersionRange) else VersionRange(*versions)
+        else:
+            self.version = VersionRange.largest()
     
     def __hash__(self):
         return super().__hash__()

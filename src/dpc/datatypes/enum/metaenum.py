@@ -37,3 +37,18 @@ class EnumMeta(type, t.Generic[T]):
         for name in cls.__dict__:
             if not name.startswith("_"):
                 yield getattr(cls, name)
+    
+    def filter(cls, filter: t.Callable | t.Any) -> t.Iterator[T]:
+        """Iterates through members of this class
+        yielding members that equal the filter.
+
+        Filter can be a callable or a value.
+        """
+
+        if not callable(filter):
+            filter_val = filter
+            filter = lambda x: (x == filter_val)
+        
+        for val in cls:
+            if filter(val):
+                yield val

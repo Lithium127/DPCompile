@@ -36,7 +36,10 @@ class Version:
         "1.21.0" : 48,
         "1.21.1" : 48,
         "1.21.4" : 61,
-        "1.21.5" : 71
+        "1.21.5" : 71,
+        "1.21.6" : 80,
+        "1.21.7" : 81,
+        "1.21.8" : 81
     }
     
     data: tuple[int, int, int]
@@ -85,6 +88,9 @@ class Version:
     def __str__(self):
         return ".".join([str(val) for val in self.data])
     
+    def __hash__(self):
+        return object.__hash__(self)
+
     def __eq__(self, value: Version) -> bool:
         if not isinstance(value, Version):
             return False
@@ -94,33 +100,37 @@ class Version:
     def __gt__(self, other: Version) -> bool:
         if not isinstance(other, Version):
             return False
-        if self.major < other.major:
-            return False
-        if self.minor < other.minor:
-            return False
-        if self.patch < other.patch:
-            return False
-        return True
+        if self.major > other.major:
+            return True
+        if self.minor > other.minor:
+            return True
+        if self.patch > other.patch:
+            return True
+        return False
     
     def __lt__(self, other: Version) -> bool:
         if not isinstance(other, Version):
             return False
-        if self.major > other.major:
-            return False
-        if self.minor > other.minor:
-            return False
-        if self.patch > other.patch:
-            return False
-        return True
+        if self.major < other.major:
+            return True
+        if self.minor < other.minor:
+            return True
+        if self.patch < other.patch:
+            return True
+        return False
     
-    def __ge__(self, value: Version) -> bool:
-        return not self.__lt__(value)
+    def __ge__(self, other: Version) -> bool:
+        if not isinstance(other, Version):
+            return False
+        return not self.__lt__(other)
     
-    def __le__(self, value: Version) -> bool:
-        return not self.__gt__(value)
+    def __le__(self, other: Version) -> bool:
+        if not isinstance(other, Version):
+            return False
+        return not self.__gt__(other)
     
     @classmethod
-    def min(cls) -> Version:
+    def minimum(cls) -> Version:
         """Returns the minimum allowed version
 
         Returns:
@@ -131,7 +141,7 @@ class Version:
         return instance
     
     @classmethod
-    def max(cls) -> Version:
+    def maximum(cls) -> Version:
         """Creates an instance of version set to the highest
         allowed version of the game
 
@@ -139,7 +149,7 @@ class Version:
             Version: A version instance of the highest allowed update
         """
         instance = object.__new__(cls)
-        instance.data = (1, 21, 4)
+        instance.data = (1, 21, 8)
         return instance
     
     @classmethod
@@ -214,6 +224,9 @@ class VersionRange:
             Version(upper) if isinstance(upper, str) else upper
         )
     
+    def __str__(self) -> str:
+        return f"VersionRange({self.lower}, {self.upper})"
+    
     @classmethod
     def from_range(cls, v1: VersionRange, v2: VersionRange) -> VersionRange:
         """Creates a new version range from the ranges given,
@@ -258,6 +271,14 @@ class VersionRange:
         }
         return instance if instance.upper < instance.lower else None
     
+    @classmethod
+    def largest(cls) -> VersionRange:
+        instance: VersionRange = super().__new__(cls)
+        instance._range = {
+            Version.minimum(),
+            Version.maximum()
+        }
+
     def contains(self, version: Version) -> bool:
         """Checks if a version passed is within the
         bounds set by this version range.
