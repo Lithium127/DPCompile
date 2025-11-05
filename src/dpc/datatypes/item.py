@@ -4,6 +4,7 @@ import typing as t
 import json
 
 from .mctype import MinecraftType
+from .version import VersionRange
 
 class ItemData(MinecraftType):
     """A class to represent item specific NBT data.
@@ -49,8 +50,9 @@ class Item(MinecraftType):
     id: str
     display_name: str
     item_number: int
+    version: VersionRange
 
-    def __init__(self, id: str, *, item_number: int = None, display_name: str = None, namespace: str = None):
+    def __init__(self, id: str, *, item_number: int = None, display_name: str = None, namespace: str = None, versions):
         """Initializes a new item representation. For vanilla minecraft datapacks,
         items are recomended to be accessed from the `Items` enum where all
         attributes are pre-generated.
@@ -71,6 +73,10 @@ class Item(MinecraftType):
         self.id = id
         self.item_number = item_number
         self.display_name = display_name
+        if versions is not None:
+            self.version = versions if isinstance(versions, VersionRange) else VersionRange(*versions)
+        else:
+            self.version = VersionRange.largest()
     
     def __call__(self, count: int = 1, data: dict = None) -> ItemData:
         """Converts this item to an `ItemData` object that encodes

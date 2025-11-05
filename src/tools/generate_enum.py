@@ -9,9 +9,8 @@ import os
 import json
 
 def version_sources():
-    make_versioned_source(
-        "blocks"
-    )
+    for source in ["blocks", "entities", "items"]:
+        make_versioned_source(source)
 
 def build_enums():
     # Blocks
@@ -138,6 +137,7 @@ def make_versioned_source(
     # Output data to usable stream
     with open(f"{source_root_path}\\{source_name}.json", "w") as f:
         json.dump(data_format, f, indent=2)
+    print(f"Versioned sources for '{source_name}'")
 
 
 
