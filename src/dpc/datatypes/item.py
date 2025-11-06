@@ -23,9 +23,12 @@ class ItemData(MinecraftType):
     ```
     """
 
-    id: str
+    root: str
+    """The item this data is based on, either as an item object or a string id"""
     count: int
+    """The amount of this item in this stack"""
     data: dict
+    """Optional data attached to this item"""
 
     def __init__(self, id: str | Item, count: int, data: dict = None):
         self.id = id.id if isinstance(id, Item) else id
@@ -34,10 +37,10 @@ class ItemData(MinecraftType):
         
     
     def to_command_str(self):
-        inner = f'"id":{self.id}, "count":{self.count}'
+        arguments = [f'"id":{self.id}', f'"count":{self.count}']
         if self.data is not None:
-            inner += f', "data": {self.data}'
-        return "{" + inner + "}"
+            arguments.append(f'"data": {self.data}')
+        return "{" + ", ".join(arguments) + "}"
 
 class Item(MinecraftType):
     """Represents an item within the game minecraft.

@@ -1,5 +1,5 @@
 import os
-from src.dpc import PackDSL, cmd, Blocks
+from src.dpc import PackDSL, cmd, Blocks, Items
 
 LOCAL_BUILD_PATH = os.environ.get("LOCAL_BUILD_PATH")
 WORLD_BUILD_PATH = os.environ.get("WORLD_BUILD_PATH")
@@ -12,12 +12,14 @@ with PackDSL(
         LOCAL_BUILD_PATH
     ).build_dev() as pack:
     
-    @pack.mcfn()
-    def get_block():
-        cmd.Command(f"execute as @s at @s run {resolve_block_info()}")
+    startup_item = Items.WARPED_FUNGUS_ON_A_STICK
 
-    @pack.mcfn(path="util")
-    def resolve_block_info():
-        for block in Blocks.filter(lambda x: x.version.contains(pack.version)):
-            message = f"Info for {block.display_name}; Source: {block.namespace}, Id: {block.id}, Name: {block.name}, Hardness: {block.hardness}"
-            cmd.Command(f"execute if block ~ ~-1 ~ {block} run {cmd.TellRaw('s', message)}")
+    @pack.mcfn(sort="load")
+    def load():
+        cmd.Log.info(f"Pack '{pack._pack_name}' Loaded!")
+        give_initial_item()
+    
+    @pack.mcfn(path="utils")
+    def give_initial_item():
+        cmd.TellRaw("a", f"Giving players {Items.NAME_TAG.display_name}")
+        cmd.Command(f"give @s {startup_item}")
