@@ -18,6 +18,8 @@ if t.TYPE_CHECKING:
     from .IO.packfile import PackFile
     from .module import Module
 
+from .plugin.dpc_plugin import PluginCollection, DPCPlugin
+
 
 
 class PackError(Exception):
@@ -81,7 +83,8 @@ class PackDSL(ScriptDecoratable):
     _scoreboards: set[Scoreboard]
     
     _modules: list[Module]
-    
+    _plugins: PluginCollection[DPCPlugin]
+
     def __init__(self, 
                  pack_name: str,
                  namesapce: str,
@@ -148,6 +151,8 @@ class PackDSL(ScriptDecoratable):
         # Scoreboard registry
         self._scoreboards = set()
         self._modules = []
+        self._plugins = PluginCollection()
+
     
     
     
@@ -164,6 +169,7 @@ class PackDSL(ScriptDecoratable):
             # emit error without building
             return False
         # Build for each version...
+        self._plugins.call_plugins("pre_build", self)
         try:
             self._build()
         except Exception as e:
@@ -172,6 +178,7 @@ class PackDSL(ScriptDecoratable):
             else:
                 # Print Error to console and continue
                 print(f"{type(e).__name__} error occurred in PackDSL building for version {self.version}. Error handling set to '{self._error_behavior}', continuing with build.")
+        self._plugins.call_plugins("post_build", self)
     
     
     
@@ -219,22 +226,18 @@ class PackDSL(ScriptDecoratable):
             for file in files:
                 file.write(path)
                 # Development logging of file content to console
-                content = file.render()
-                if content is not None:
-                    print(f"\n[{file.full_name}]{(' : Script' + (' instance passed' if file._pass_self else '')) if isinstance(file, Script) else ''}")
-                    print(f"  @ <{path}>")
-                    print("\n".join([f"  |  {line}" for line in content.split("\n")]))
+                self._plugins.call_plugins("render_file", self, file, path)
     
     
-    def with_plugins(self, plugins: list) -> PackDSL:
-        """Sets list of plugins to use with 
-
-        Args:
-            plugins (list): _description_
+    def with_plugins(self, *plugins: DPCPlugin) -> PackDSL:
+        """Registers the included plugins with the pack,
+        enabling runtime hooks and helper methods.
 
         Returns:
-            PackDSL: _description_
+            PackDSL: The pack instance to enter context
         """
+        for plugin in plugins:
+            self._plugins.append(plugin)
         return self
     
     def with_errors(self, behavior: t.Literal["strict", "ignore"]) -> PackDSL:

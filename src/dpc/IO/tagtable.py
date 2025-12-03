@@ -131,7 +131,7 @@ class TagTable(JsonFile):
                     continue
                 content.append(f"{item.pack._namespace}:{item.name}")
                 continue
-            content.append(item)
+            content.append(str(item))
         return content
     
     def render(self):

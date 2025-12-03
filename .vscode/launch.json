@@ -10,6 +10,19 @@
             "request": "launch",
             "program": "build.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Run Pytest",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "pytest",
+            "args": [
+                "-q",              // quiet output
+                "--disable-warnings",
+                "--maxfail=1"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": false
         }
     ]
 }
