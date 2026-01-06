@@ -32,6 +32,5 @@ with PackDSL(
         cmd.Command(f"give @s {startup_item}")
     
     @pack.mcfn(path="utils")
-    def clear_entities():
-        cmd.Comment("Nothing here yet")
+    def clear_entities(): pass
     

@@ -72,7 +72,7 @@ class Log(BaseCommand):
         instance.__init__(msg, level='critical', **kwargs)
         return instance
     
-    def build(self):
+    def render(self):
         # TODO: Replace selector with entity selector enum
         script_name = (self._script.name or 'N/A')
         if (self._script._parent != self._script.pack):
@@ -94,5 +94,5 @@ class ExecuteRandom(BaseCommand):
         super().__init__(**kwargs)
         self.options = list(*options)
     
-    def build(self):
+    def render(self):
         return cmd.TellRaw("a", "test")

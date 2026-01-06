@@ -2,6 +2,7 @@ from __future__ import annotations
 import typing as t
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 
 from ..datatypes.version import Version
 
@@ -18,7 +19,11 @@ def get_current_pack() -> PackDSL:
 
 class CommandError(Exception):
     """Represents an error occurring within a command"""
-    pass
+    command: BaseCommand
+
+    def __init__(self, cmd: BaseCommand, *args):
+        super().__init__(f"Exception occurred in {cmd.__class__.__name__}, instance {cmd}. ", *args)
+        self.command = cmd
 
 
 class BaseCommand(ABC):
@@ -89,22 +94,54 @@ class BaseCommand(ABC):
             return None
         return self.build()
 
-    @abstractmethod
     def build(self) -> str:
-        """build the content of this command as a single
-        string without line breaks. The usage dictates that
-        the string returned by this be interpretable by the
-        .mcfunction filetype.
+        """Renders and validates a command instance for
+        addition to a script. If the command is masked
+        this function will still return the rendered
+        content for the command, see `_build_for_script()`
+        for more information.
+
+        If a command fails validation a `CommandError` is
+        raised to avoid building malformed commands, this
+        exeption should be handled by the command error
+        handler.
+
+        > This function may be run multiple times, meaning it should
+        not directly modify any attributes of classes.
 
         If this method is being run manually on a floating
         instance, it is recommended to use the `str()` type
         or to run the commands `__str__()` method to mark the
         command as masked automatically and omit its content
         from the final render.
+
+        Returns:
+            str: The built command string ready for addition to a script.
+        """
+        value = self.render()
+        if not isinstance(value, str) and isinstance(value, Iterable):
+            value = cmdstr(*value)
         
-        > This function can be run multiple times, meaning it should
-        not directly modify any attributes of classes in an additive
-        manner, preferably at all.
+        if not self.__class__.validate(value):
+            raise CommandError(self, "Malformed command.\nCommand signature failed to match defined pattern, see `validate()` method for more information.")
+        
+        return value
+
+    @abstractmethod
+    def render(self) -> str | list[str] | tuple[str, ...]:
+        """build the content of this command as a single
+        string without line breaks. The usage dictates that
+        the string returned by this be interpretable by the
+        .mcfunction filetype. When making a new command see
+        the `cmdstr()` function for simple methods of 
+        creating the return value.
+
+        This method can return a single string, or an iterable
+        of objects that can be converted into strings via the
+        `cmdstr()` function.
+        
+        > This function may be run multiple times, meaning it should
+        not directly modify any attributes of classes.
 
         Returns:
             str: The string this instance represents
@@ -113,7 +150,7 @@ class BaseCommand(ABC):
     
     @classmethod
     def validate(cls: BaseCommand, cmdstr: str) -> bool:
-        """An optionally overriden method that determines if
+        """**[CURRENTLY UNUSED]** - An optionally overriden method that determines if
         a given string command is a valid string for this
         command instance. Usually checks each value of the
         command string or literal to validate.
@@ -127,18 +164,26 @@ class BaseCommand(ABC):
         """
         return True
     
-    def mask(self) -> BaseCommand:
-        """Permenantly marks this command as `masked`. 
-        Omitting it from the final render. Running this
-        method multiple times does not have any effect
+    def mask(self, value: bool = True, /) -> BaseCommand:
+        """Marks this command instance as `masked`, omitting its
+        content from the final render. Optionally can *unmask*
+        commands which will add their content back into the render
+        if done before a given script is written.
+
+        Commands that have been converted to strings (via `str()` or `__str__())
+        are automatically masked to avoid repeatedly printing content to
+        a given file.
+
+        Args:
+            value (bool, optional): If this command should be masked or not. Defaults to True.
 
         Returns:
-            BaseCommand: The instance that was masked.
+            BaseCommand: The command instance that was modified.
         """
-        self.is_masked = True
+        self.is_masked = value
         return self
     
-    def dev(self, value=True) -> BaseCommand:
+    def dev(self, value=True, /) -> BaseCommand:
         """Makes a command's `is_dev` flag equal to the value
         of the argument.
 
@@ -152,7 +197,7 @@ class BaseCommand(ABC):
         return self
     
     @classmethod
-    def _set_context(cls, ctx: ScriptContext) -> None:
+    def _set_context(cls, ctx: ScriptContext, /) -> None:
         """Sets the reference to the current available 
         script context for all commands.
         
@@ -207,7 +252,7 @@ class Command(BaseCommand):
         super().__init__(**kwargs)
         self.content = content
     
-    def build(self):
+    def render(self):
         return self.content
 
 class Comment(BaseCommand):
@@ -219,7 +264,51 @@ class Comment(BaseCommand):
         super().__init__(**kwargs)
         self.content = str(content)
     
-    def build(self):
+    def render(self):
+        # Split line returns into new lines with comments.
         if "\n" in self.content:
             return "\n".join([f"# {line}" for line in self.content.split("\n")])
         return f"# {self.content}"
+
+
+def _cmd_str_safe(value: t.Any, /) -> str:
+    """Evaluates an object to a command safe version. Any object that
+    has a `to_command_str()` method will have that method called,
+    otherwise the str() value of the object is returned. If the object 
+    is `None` then an empty string is returned. This function is safe
+    for use in constructing commands.
+
+    Args:
+        value (t.Any): The object to evaluate
+
+    Returns:
+        str: The command safe string representation of that object.
+    """
+    if value is None:
+        return ""
+            
+    if hasattr(value, "to_command_str"):
+        return value.to_command_str()
+    return str(value)
+
+
+def cmdstr(*args, make_safe: bool = True) -> str:
+    """Returns arguments formatted as a command string. Arguments that
+    evaluate to `None` have the preceding space omitted and are not
+    included in the final render. Takes any number of arguments.
+
+    Args:
+        make_safe (bool, optional): If each term should be made command safe. Defaults to True.
+
+    Returns:
+        str: The formatted command string
+    """
+
+    value = []
+    for arg in args:
+        if arg is None:
+            continue
+        if make_safe:
+            arg = _cmd_str_safe(arg)
+        value.append(arg)
+    return " ".join(value)

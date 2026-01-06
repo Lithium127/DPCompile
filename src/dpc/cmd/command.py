@@ -5,7 +5,7 @@ checking errors at build time.
 from __future__ import annotations
 import typing as t
 
-from .bases import BaseCommand, Command
+from .bases import BaseCommand, Command, cmdstr
 
 from ..datatypes.selector import ensure_selector
 from ..datatypes.textelement import TextElement
@@ -35,12 +35,25 @@ class CallFunction(BaseCommand):
         super().__init__(**kwargs)
         self.target_name = script
     
-    def build(self):
-        return f"function {self.target_name}"
+    def render(self):
+        return "function", self.target_name
+
+
+class Clear(BaseCommand):
+
+    target: Selector | str
+    item: str | None
+    max_count: int | None
+
+    def __init__(self, target: Selector | SelectorLiteral, item: str = None, max_count: int = None, **kwargs):
+        super().__init__(**kwargs)
+    
+    def render(self):
+        return "clear", self.target, self.item, self.max_count
 
 
 class TellRaw(BaseCommand):
-    """Sends a TextElement message to players"""
+    """Sends a `TextElement` or `string` message to selected players"""
     
     target: Selector
     content: TextElement
@@ -57,6 +70,6 @@ class TellRaw(BaseCommand):
         self.target = ensure_selector(target)
         self.content = TextElement(content)
 
-    def build(self):
-        return f"tellraw {self.target.to_command_str()} {self.content.to_command_str()}"
+    def render(self):
+        return "tellraw", self.target, self.content
 
