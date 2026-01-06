@@ -60,8 +60,6 @@ with PackDSL(...) as pack:
 
 
 from .packdsl import PackDSL as PackDSL
-from .module import Module as Module
-from .module import modulemethod as modulemethod
 
 # File IO
 from .IO.jsonfile import JsonFile as JsonFile

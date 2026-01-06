@@ -16,7 +16,7 @@ from .datatypes.scoreboard import Scoreboard
 
 if t.TYPE_CHECKING:
     from .IO.packfile import PackFile
-    from .module import Module
+    # from .module import Module
 
 from .plugin.dpc_plugin import PluginCollection, DPCPlugin
 
@@ -90,7 +90,7 @@ class PackDSL(ScriptDecoratable):
     
     _scoreboards: set[Scoreboard]
     
-    _modules: list[Module]
+    # _modules: list[Module] # Change later
     _plugins: PluginCollection[DPCPlugin]
 
     def __init__(self, 
@@ -158,7 +158,7 @@ class PackDSL(ScriptDecoratable):
         
         # Scoreboard registry
         self._scoreboards = set()
-        self._modules = []
+        # self._modules = []
         self._plugins = PluginCollection()
 
     
@@ -331,16 +331,16 @@ class PackDSL(ScriptDecoratable):
     def _prerender_scripts(self) -> None:
         super()._prerender_scripts()
         
-        for module in self._modules:
-            module._prerender_scripts()
+        # for module in self._modules:
+        #     module._prerender_scripts()
     
     
     
-    def mount(self, module: Module, path: str = "/") -> None:
-        self._modules.append(module)
-        module._root_dir = path
-        module._parent = self
-        module._collect_scripts()
+    # def mount(self, module: Module, path: str = "/") -> None:
+    #     self._modules.append(module)
+    #     module._root_dir = path
+    #     module._parent = self
+    #     module._collect_scripts()
         
         
     @property
