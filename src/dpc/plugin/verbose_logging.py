@@ -5,10 +5,21 @@ from .dpc_plugin import DPCPlugin
 from ..IO.script import Script
 
 class VerboseLoggingPlugin(DPCPlugin):
+    """**[Builtin]** Plugin that displays information to the console 
+    during the build process, including file content, final directory
+    layout, and exceptions during rendering.
+    """
 
     display: dict[str, bool]
 
     def __init__(self, directory: bool = True, file: bool = True):
+        """Plugin that displays information to the console during the build
+        process.
+
+        Args:
+            directory (bool, optional): If the final directory layout should be displayed. Defaults to True.
+            file (bool, optional): If files should be printed to the console after rendering. Defaults to True.
+        """
         self.display = {
             "file" : file,
             "dir" : directory
