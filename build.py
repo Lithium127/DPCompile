@@ -2,17 +2,14 @@ import os
 from src.dpc import PackDSL, cmd, Blocks, Items, TagTable
 from src.dpc.plugin.verbose_logging import VerboseLoggingPlugin
 
-LOCAL_BUILD_PATH = os.environ.get("LOCAL_BUILD_PATH")
-WORLD_BUILD_PATH = os.environ.get("WORLD_BUILD_PATH")
-
 # Pack Creation
 with PackDSL(
         "Testing Pack", "tcev", 
         "This is a test description", 
         "1.21.8",
-        LOCAL_BUILD_PATH
+        os.environ.get("LOCAL_BUILD_PATH")
     ).build_dev().with_plugins(
-        VerboseLoggingPlugin()
+        VerboseLoggingPlugin(file=False)
     ) as pack:
     
     startup_item = Items.WARPED_FUNGUS_ON_A_STICK

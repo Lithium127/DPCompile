@@ -1,3 +1,4 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
 import typing as t
 
@@ -5,6 +6,9 @@ if t.TYPE_CHECKING:
     from ..IO.packfile import PackFile
     from ..packdsl import PackDSL
 
+
+class DPCPluginError(Exception):
+    pass
 
 class DPCPlugin(ABC):
     """The base class for all plugins, defines a number
@@ -14,7 +18,8 @@ class DPCPlugin(ABC):
         `pre_build()`
         `post_build()`
         `render_file()`
-        `post_render()`
+        `on_build_error()`
+        `on_def_error()`
     
     """
 
@@ -35,7 +40,7 @@ class DPCPlugin(ABC):
             pack (PackDSL): The pack this plugin is registered to
         """
 
-    def render_file(self, pack: 'PackDSL', file: 'PackFile', path: str) -> None:
+    def render_file(self, pack: PackDSL, file: PackFile, path: str) -> None:
         """A hook for rendering a file, called after
         a file has finished rendering but before the
         file is added to the directory.
@@ -49,20 +54,40 @@ class DPCPlugin(ABC):
             file (PackFile): The rendered pack file
         """
     
+    def on_build_error(self, pack: PackDSL, exc: Exception) -> None:
+        """A hook that runs when a pack encounters an
+        exception during the building process.
+
+        Args:
+            pack (PackDSL): The pack that this plugin is registered to
+            exc (Exception): The exception thrown
+        """
+    
+    def on_def_error(self, pack: PackDSL, exc: Exception) -> None:
+        """A hook that runs when a pack encounter an
+        exception in the definition process.
+
+        Args:
+            pack (PackDSL): The pack that this plugin is registered to
+            exc (Exception): The exception thrown
+        """
 
 
-class PluginCollection(list):
+class PluginCollection(list[DPCPlugin]):
     """A list of plugins"""
 
     def call_plugins(self, hook_name: str, *args, **kwargs) -> None:
-        """Calls a given function with all plugins as
-        the first argument.
+        """Calls the hook with a given name from all
+        registered plugins within this collection.
 
         Args:
-            meth (callable): The method 
+            hook_name (str): The name of the plugin hook to run, see `DPCPlugin` for possible hooks
+
+        Raises:
+            DPCPluginError: If there was an error within a hook call
         """
         for plugin in self:
             try:
                 plugin.__getattribute__(hook_name)(*args, **kwargs)
             except Exception as e:
-                raise e
+                raise DPCPluginError(f"Error running plugin hook '{hook_name}' with plugin {plugin.__class__.__name__}") from e

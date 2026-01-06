@@ -25,6 +25,14 @@ from .plugin.dpc_plugin import PluginCollection, DPCPlugin
 class PackError(Exception):
     pass
 
+class PackBuildError(PackError):
+    
+    file: PackFile
+
+    def __init__(self, file: PackFile, *args):
+        self.file = file
+        super().__init__(*args)
+
 
 class PackFileSystem:
     
@@ -167,12 +175,15 @@ class PackDSL(ScriptDecoratable):
         if exc:
             # For user caused errors within pack scope
             # emit error without building
+            self._plugins.call_plugins("on_def_error", self, exc)
             return False
+        
         # Build for each version...
         self._plugins.call_plugins("pre_build", self)
         try:
             self._build()
         except Exception as e:
+            self._plugins.call_plugins("on_build_error", self, e)
             if self._error_behavior == "strict":
                 raise e
             else:
@@ -202,7 +213,7 @@ class PackDSL(ScriptDecoratable):
         try:
             self._prerender_scripts()
         except ScriptError as e:
-            raise PackError(f"Exception found within {self._pack_name} " + 
+            raise PackBuildError(e.script, f"Exception found within {self._pack_name} " + 
                             f"building for version {self.version} [{self.version.pack_reference}] " +
                             f"while rendering '{e.script.full_name}' ({e.script.namespace_name})") from e
         self._build_scoreboard_initializer()

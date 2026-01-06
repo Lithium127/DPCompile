@@ -45,7 +45,6 @@ class VerboseLoggingPlugin(DPCPlugin):
                     traverse_dir(tree[entry], [*bars, True])
         
         traverse_dir(directory)
-
     
     @staticmethod
     def dir_to_dict(path):
