@@ -22,7 +22,7 @@ class CommandError(Exception):
     command: BaseCommand
 
     def __init__(self, cmd: BaseCommand, *args):
-        super().__init__(f"Exception occurred in {cmd.__class__.__name__}, instance {cmd}. ", *args)
+        super().__init__(f"Exception occurred in {cmd.__class__.__name__}, instance {object.__str__(cmd)}. ", *args)
         self.command = cmd
 
 
@@ -150,7 +150,7 @@ class BaseCommand(ABC):
     
     @classmethod
     def validate(cls: BaseCommand, cmdstr: str) -> bool:
-        """**[CURRENTLY UNUSED]** - An optionally overriden method that determines if
+        """An optionally overriden method that determines if
         a given string command is a valid string for this
         command instance. Usually checks each value of the
         command string or literal to validate.
@@ -312,3 +312,41 @@ def cmdstr(*args, make_safe: bool = True) -> str:
             arg = _cmd_str_safe(arg)
         value.append(arg)
     return " ".join(value)
+
+def cmdargs(cmd: str) -> tuple[str]:
+    """Splits a command into an argument list, accounting 
+    for strings, json elements, and other non-argument items
+
+    Args:
+        cmd (str): The command to convert into arguments
+
+    Returns:
+        tuple[str]: The command as arguments
+    """
+    values = []
+    builder = ""
+
+    ctx_pairs: tuple[tuple[str, str]] = (
+        ('"', '"'),
+        ("{", "}"),
+        ("[", "]")
+    )
+    ctx_index = None
+
+    for item in cmd:
+        if ctx_index is None:
+            for index, pair in enumerate(ctx_pairs):
+                if item == pair[0]:
+                    ctx_index = index
+                    break
+            if ctx_index is None:
+                if item == " ":
+                    values.append(builder)
+                    builder = ""
+                else:
+                    builder = builder + item
+        else:
+            if item == ctx_pairs[ctx_index][1]:
+                ctx_index = None
+    values.append(builder)
+    return tuple(values)

@@ -5,7 +5,7 @@ checking errors at build time.
 from __future__ import annotations
 import typing as t
 
-from .bases import BaseCommand, Command, cmdstr
+from .bases import BaseCommand, cmdargs
 
 from ..datatypes.selector import ensure_selector
 from ..datatypes.textelement import TextElement
@@ -37,6 +37,12 @@ class CallFunction(BaseCommand):
     
     def render(self):
         return "function", self.target_name
+    
+    @classmethod
+    def validate(cls, cmdstr):
+        if len(cmdargs(cmdstr)) != 2:
+            return False
+        return True
 
 
 class Clear(BaseCommand):
@@ -50,6 +56,18 @@ class Clear(BaseCommand):
     
     def render(self):
         return "clear", self.target, self.item, self.max_count
+    
+    @classmethod
+    def validate(cls, cmdstr):
+        args: tuple[str] = cmdargs(cmdstr)
+        if len(args) < 2 or len(args > 4):
+            return False
+        
+        if len(args) == 4:
+            if not args[3].isdigit():
+                return False
+
+        return True
 
 
 class TellRaw(BaseCommand):
