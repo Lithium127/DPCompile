@@ -10,7 +10,7 @@ from .bases import BaseCommand, cmdargs
 from ..datatypes.position import Position, positionlike
 from ..datatypes.selector import ensure_selector
 from ..datatypes.textelement import TextElement
-from ..datatypes.block import BlockState
+from ..datatypes.block import Block, BlockState
 
 if t.TYPE_CHECKING:
     from ..datatypes.selector import Selector, SelectorLiteral
@@ -120,6 +120,8 @@ class Clone(BaseCommand):
         self.bounds = (Position(begin), Position(end))
         self.destination = Position(destination)
         self.block_mask = mask
+        if isinstance(self.block_mask, Block):
+            self.block_mask = self.block_mask()
 
         self.source_dim = source_dim
         self.dest_dim = dest_dim
