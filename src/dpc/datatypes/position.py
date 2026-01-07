@@ -112,7 +112,7 @@ class Position(MinecraftType):
         return (self._pos == value._pos)        
     
     def to_command_str(self):
-        return super().to_command_str()
+        return " ".join((str(i) for i in self._pos))
     
     def set_position(self, value: tuple[int | float, int | float, int | float], *, use_type: float | int | None = None) -> None:
         """Directly sets the position data for this instance. Updates this instances current type

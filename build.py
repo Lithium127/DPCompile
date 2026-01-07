@@ -14,4 +14,8 @@ with PackDSL(
     
     @pack.mcfn(sort="load")
     def load():
-        cmd.TellRaw("a", "Pack Loaded!")
+        cmd.Clone(
+            (0, 0, 0), (3, 3, 3), (0, 100, 0), 
+            Blocks.STONE_SLAB({"type":"top"}),
+            source_dim="minecraft:the_nether"
+        )

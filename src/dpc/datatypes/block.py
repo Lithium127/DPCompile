@@ -93,7 +93,6 @@ class BlockState(MinecraftType):
             state (dict[str, t.Any], optional): The optional state of the block. Not all blocks have available states. Defaults to None.
             tags (dict[str, t.Any], optional): The optional data tags describing this block. Not all blocks have data that can be stored. Defaults to None.
         """
-        super().__init__()
         self.block = block
         self.block_state = state
         self.data_tags = tags
@@ -102,7 +101,7 @@ class BlockState(MinecraftType):
     def to_command_str(self):
         value = f"{self.target.to_command_str()}"
         if self.block_state is not None:
-            value = value + "[" + (f"{key}={val}" for key, val in self.block_state.items()) + "]"
+            value = value + "[" + " ".join((f"{key}={val}" for key, val in self.block_state.items())) + "]"
         if self.data_tags is not None:
             value = value + "{" + (f"{key}:{val.to_command_str() if hasattr(val, "to_command_str") else str(val)}" for key, val in self._data_tags.items()) + "}"
         return value

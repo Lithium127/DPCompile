@@ -6,6 +6,10 @@ from abc import ABCMeta
 
 from pathlib import Path
 
+def is_script(value: Script, /) -> bool:
+    """Returns true if the given value is a script"""
+    return isinstance(value, Script)
+
 from .packfile import PackFile, FileParentable
 from ..cmd.bases import BaseCommand, Comment
 from ..cmd.command import CallFunction
