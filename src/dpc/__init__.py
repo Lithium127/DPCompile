@@ -90,6 +90,8 @@ from .datatypes.scoreboard import ScoreboardClosure as ScoreboardClosure
 
 # MinecraftType Datatypes
 from .datatypes.block import Block as Block
+from .datatypes.block import BlockState as BlockState
+from .datatypes.block import BlockPredicate as BlockPredicate
 from .datatypes.item import Item as Item
 from .datatypes.item import ItemData as ItemData
 from .datatypes.position import Position as Position

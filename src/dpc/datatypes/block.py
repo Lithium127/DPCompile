@@ -5,6 +5,8 @@ from .version import VersionRange
 
 from .mctype import MinecraftType
 
+from ..IO.tagtable import TagTable
+
 
 class Block(MinecraftType):
     
@@ -15,8 +17,6 @@ class Block(MinecraftType):
     hardness: float
     version: VersionRange
     
-    tags: dict[str, t.Any]
-    
     def __init__(self, 
                  name: str, 
                  *, 
@@ -24,7 +24,6 @@ class Block(MinecraftType):
                  namespace: str | None = None, 
                  display_name: str = None, 
                  hardness: float = None,
-                 tags: dict[str, t.Any] | None = None,
                  versions: VersionRange | tuple[str, str] = None
                  ) -> None:
         """Represents a single block type within the game. Without a position or other
@@ -50,7 +49,6 @@ class Block(MinecraftType):
         self.display_name = display_name
         self.id = id
         self.hardness = hardness
-        self.tags = tags or {}
         if versions is not None:
             self.version = versions if isinstance(versions, VersionRange) else VersionRange(*versions)
         else:
@@ -67,8 +65,78 @@ class Block(MinecraftType):
     def __str__(self):
         return self.to_command_str()
     
+    def __call__(self, state: dict[str, t.Any] = None, tags: dict[str, t.Any] = None) -> BlockState:
+        return BlockState(self, state, tags)
+    
     def to_command_str(self):
-        if len(self.tags.keys()) == 0:
-            return f"{self.namespace}:{self.name}"
-        tag_str = " ".join([f"{tag}={value}" for tag, value in self.tags.items()])
-        return f"{self.namespace}:{self.name}[{tag_str}]"
+        return f"{self.namespace}:{self.name}"
+
+
+
+class BlockState(MinecraftType):
+    """A type describing a block with 
+    a given state or data. Such as `minecraft:stone[foo=bar]`
+    or `stone[foo=bar]{baz:nbt}`
+    """
+
+    target: Block
+    _block_state: dict[str, t.Any] | None
+    _data_tags: dict[str, t.Any] | None
+
+    # TODO: Replace `t.Any` in block_state with typevar from block definition
+    def __init__(self, block: Block, /, state: dict[str, t.Any] = None, tags: dict[str, t.Any] = None):
+        """A type describing a block with a given state or data. Such as `minecraft:stone[foo=bar]`
+        or `stone[foo=bar]{baz:nbt}`.
+
+        Args:
+            block (Block): The block instance with this data
+            state (dict[str, t.Any], optional): The optional state of the block. Not all blocks have available states. Defaults to None.
+            tags (dict[str, t.Any], optional): The optional data tags describing this block. Not all blocks have data that can be stored. Defaults to None.
+        """
+        super().__init__()
+        self.block = block
+        self.block_state = state
+        self.data_tags = tags
+    
+
+    def to_command_str(self):
+        value = f"{self.target.to_command_str()}"
+        if self.block_state is not None:
+            value = value + "[" + (f"{key}={val}" for key, val in self.block_state.items()) + "]"
+        if self.data_tags is not None:
+            value = value + "{" + (f"{key}:{val.to_command_str() if hasattr(val, "to_command_str") else str(val)}" for key, val in self._data_tags.items()) + "}"
+        return value
+
+
+    def _validate_target_state(self) -> None:
+        if not isinstance(self.target, Block):
+            raise ValueError(f"Invalid argument passed to {type(self)}, {type(self.target)} is not of type Block")
+
+
+    @property
+    def block(self) -> Block:
+        return self.target
+    
+    @block.setter
+    def block(self, value: Block) -> None:
+        self.target = value
+        self._validate_target_state()
+
+
+class BlockPredicate(BlockState):
+    """A more advanced type describing a block or table with 
+    a given state or data. Such as `minecraft:stone[foo=bar]`
+    or `stone[foo=bar]{baz:nbt}`. Unlike the `BlockState` this 
+    type can reference tables with data or properties.
+    """
+    target: Block | TagTable
+
+    def __init__(self, block: Block | TagTable, /, state = None, tags = None):
+        super().__init__(block, state, tags)
+
+    def _validate_target_state(self):
+        if isinstance(self.target, Block): 
+            return # Check if block has allowed states
+        if isinstance(self.target, TagTable):
+            return # Check if all blocks have allowed states
+        raise ValueError(f"Invalid argument passed to {type(self)}, {type(self.target)} is not of type (Block, TagTable)")
