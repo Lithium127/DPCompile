@@ -6,8 +6,9 @@ from pathlib import Path
 
 from collections import defaultdict
 
+from .template import TemplateDecoratable
 from .IO.mcmeta import McMeta
-from .IO.script import Script, ScriptDecoratable, ScriptError
+from .IO.script import Script, ScriptError
 from .IO.tagtable import TagTable
 from .datatypes.version import Version
 
@@ -58,7 +59,7 @@ class PackFileSystem:
         return self.tree.get(path, None)
 
 
-class PackDSL(ScriptDecoratable):
+class PackDSL(TemplateDecoratable):
     """Represents a datapack, holding context and alternate data.
     
     When using PackDSL as a context with the `with` statement the `build()` method is called
@@ -330,17 +331,6 @@ class PackDSL(ScriptDecoratable):
     
     def _prerender_scripts(self) -> None:
         super()._prerender_scripts()
-        
-        # for module in self._modules:
-        #     module._prerender_scripts()
-    
-    
-    
-    # def mount(self, module: Module, path: str = "/") -> None:
-    #     self._modules.append(module)
-    #     module._root_dir = path
-    #     module._parent = self
-    #     module._collect_scripts()
         
         
     @property

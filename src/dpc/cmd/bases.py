@@ -233,7 +233,7 @@ class Command(BaseCommand):
     
     content: str
     
-    def __init__(self, content: str, **kwargs):
+    def __init__(self, *content: str, **kwargs):
         """A literal command without structure, returns
         the base string passed to the command when built.
 
@@ -253,7 +253,7 @@ class Command(BaseCommand):
         self.content = content
     
     def render(self):
-        return self.content
+        return cmdstr(*self.content)
 
 class Comment(BaseCommand):
     """A comment within a script, for developer notes"""

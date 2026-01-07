@@ -71,6 +71,12 @@ from .IO.script import ScriptDecoratable as ScriptDecoratable
 from .IO.tagtable import TagTable as TagTable
 from .IO.textfile import TextFile as TextFile
 
+# Templates
+from .template import script as script
+from .template import Template as Template
+from .template import TemplateDecoratable as TemplateDecoratable
+from .template import TemplateError as TemplateError
+
 # Core Datatypes
 from .datatypes.mctype import MinecraftType as MinecraftType
 from .datatypes.mctype import ensure_mctype as ensure_mctype

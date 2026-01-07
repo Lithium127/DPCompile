@@ -89,6 +89,8 @@ class Script(PackFile):
     _is_rendered: bool
     
     _parent: ScriptDecoratable
+
+    _mask_on_empty: bool = False
     
     def __init__(self, name: str, content: callable | None, *, pass_script: bool = False):
         """Represents a script file within a datapack that can hold commands and operations.
@@ -117,7 +119,7 @@ class Script(PackFile):
         self._ctx = None
         self._is_rendered = False
     
-    def __call__(self, **kwargs):
+    def __call__(self, *args, **kwargs):
         # Run if pack is building commands AND function was called from another location
         if (BaseCommand._CURRENT_CONTEXT is not None):
             # Case for calling within other functions
@@ -141,7 +143,9 @@ class Script(PackFile):
             args.append(self._method_instance)
         if self._pass_self:
             args.append(self)
-        return self._content_func(*args)
+        func = getattr(self, "_content_func")
+        print(args)
+        return func(*args)
     
     def render(self):
         if not self._is_rendered:
@@ -159,6 +163,8 @@ class Script(PackFile):
                     content.append(render)
         # Check for empty content
         if len(content) == 0:
+            if self._mask_on_empty:
+                return None
             content.append(Comment(f"No content generated for {self.full_name}", register = False).build())    
         
         # Generate Preface comments
@@ -205,6 +211,14 @@ class Script(PackFile):
     def namespace_name(self) -> str:
         return f"{self.pack._namespace}:{(self.path / self.name).as_posix()}"
 
+    @property
+    def method_instance(self) -> t.Any:
+        return self._method_instance
+    
+    @method_instance.setter
+    def method_instance(self, value: t.Any) -> None:
+        self._method_instance = value
+        self._pass_self = False # Assume that the method does not want a self argument
 
 class RayCastScript(Script):
     """Represetns a script file that recursively iterates until either 
@@ -354,13 +368,17 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
                                     game tick or on pack load. If `None` then then
                                     the script is not called in either case.
                                     Defaults to None
+            path (str, optional):   An alternate path for a script to be added to. 
+                                    If given then the script will be added to that 
+                                    path relative to pack root. 
+                                    Defaults to None
 
         Returns:
             Script: The new script instance that wraps the function passed
         """
         
         def inner(func: function) -> callable:
-            script = self.create_script_from_callable(func, name=name, dev=dev)
+            script = create_script_from_callable(func, name=name, dev=dev)
             is_ticking = None if sort is None else (sort == 'tick')
             self.add_script(
                 script, 
@@ -374,7 +392,7 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         
         def inner(func: function) -> callable:
             
-            script = self.create_script_from_callable(func, name=name)
+            script = create_script_from_callable(func, name=name)
             
             script._is_dev = dev
             
@@ -419,31 +437,32 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         for script in self._script_collectors:
             script.render()
     
-    def create_script_from_callable(self, func: callable, *, name: str = None, dev: bool = False,  instance: object = None) -> Script:
-        """Creates a new script instance by observing the attributes of
-        a given function. The function is run each time the script is rendered
 
-        Args:
-            func (callable): The function that creates the content of the script
-            name (str, optional): The optional overriden name for the script. Defaults to None.
+def create_script_from_callable(func: callable, *, name: str = None, dev: bool = False,  instance: object = None) -> Script:
+    """Creates a new script instance by observing the attributes of
+    a given function. The function is run each time the script is rendered
 
-        Returns:
-            Script: The new script instance
-        """
-        args = inspect.getfullargspec(func)
-        pass_script = False
-        if len(args.args) >= 1:
-            # Get type if available otherwise set to true
-            if instance is None or len(args.args) >= 2:
-                pass_script = args.annotations.get(args.args[0], Script) is Script
-                
-        
-        script = Script(
-            name = name or func.__name__,
-            content = func,
-            pass_script=pass_script
-        )
-        script._is_dev = dev
-        script._method_instance = instance
-        return script
+    Args:
+        func (callable): The function that creates the content of the script
+        name (str, optional): The optional overriden name for the script. Defaults to None.
+
+    Returns:
+        Script: The new script instance
+    """
+    args = inspect.getfullargspec(func)
+    pass_script = False
+    if len(args.args) >= 1:
+        # Get type if available otherwise set to true
+        if instance is None or len(args.args) >= 2:
+            pass_script = args.annotations.get(args.args[0], Script) is Script
+            
+    
+    script = Script(
+        name = name or func.__name__.lstrip("__").rstrip("__"),
+        content = func,
+        pass_script=pass_script
+    )
+    script._is_dev = dev
+    script._method_instance = instance
+    return script
         

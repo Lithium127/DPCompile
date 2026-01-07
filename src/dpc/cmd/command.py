@@ -53,6 +53,9 @@ class Clear(BaseCommand):
 
     def __init__(self, target: Selector | SelectorLiteral, item: str = None, max_count: int = None, **kwargs):
         super().__init__(**kwargs)
+        self.target = ensure_selector(target)
+        self.item = item
+        self.max_count = max_count
     
     def render(self):
         return "clear", self.target, self.item, self.max_count
@@ -60,7 +63,7 @@ class Clear(BaseCommand):
     @classmethod
     def validate(cls, cmdstr):
         args: tuple[str] = cmdargs(cmdstr)
-        if len(args) < 2 or len(args > 4):
+        if len(args) < 2 or len(args) > 4:
             return False
         
         if len(args) == 4:
