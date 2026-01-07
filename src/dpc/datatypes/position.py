@@ -166,3 +166,6 @@ class Position(MinecraftType):
     @z.setter
     def z(self, value) -> None:
         self._pos = (self.x, self.y, value)
+
+
+positionlike = Position | t.Iterable[int]

@@ -9,6 +9,7 @@ from .bases import Comment as Comment
 from .bases import Command as Command
 from .command import CallFunction as CallFunction
 from .command import Clear as Clear
+from .command import Clone as Clone
 from .command import TellRaw as TellRaw
 
 # Composite Commands
