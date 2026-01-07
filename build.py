@@ -11,7 +11,6 @@ with PackDSL(
     ).build_dev().with_plugins(
         VerboseLoggingPlugin(file=False)
     ) as pack:
-    
 
     startup_item = Items.WARPED_FUNGUS_ON_A_STICK
     scaffold_blocks = TagTable('block', "scaffold", [
