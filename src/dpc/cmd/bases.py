@@ -3,6 +3,7 @@ import typing as t
 
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
+import copy
 
 from ..datatypes.version import Version
 
@@ -47,6 +48,7 @@ class BaseCommand(ABC):
     """Wether or not this command should be omitted from the final 
     build. Used when passing commands as arguments into other 
     commands"""
+    _is_registered: bool
     
     def __init__(self, register: bool = True, dev: bool = False) -> None:
         """Initializes a command, registering it to a context
@@ -63,11 +65,9 @@ class BaseCommand(ABC):
         # All commands are default marked non-masked
         self.is_masked = False
         
+        self._is_registered = False
         if BaseCommand._CURRENT_CONTEXT is not None and register:
-            if BaseCommand._CURRENT_CONTEXT.script.pack._build_dev or (not self.is_dev):
-                BaseCommand._CURRENT_CONTEXT.add_cmd(self)
-            else:
-                BaseCommand._CURRENT_CONTEXT.add_cmd(Comment(f"{self.__class__.__name__} command omitted for production", register=False))
+            self._register()
     
     def __init_subclass__(cls, min_version: Version | None = None, max_version: Version | None = None):
         cls._VERSION_RANGE = (min_version or Version.minimum(), max_version or Version.maximum())
@@ -78,6 +78,34 @@ class BaseCommand(ABC):
         # This will not work for commands passed as other arguments
         self.mask()
         return self.build()
+    
+    def __call__(self, mask: bool = True) -> None | BaseCommand:
+        """Calling a command is a method for moving the placement of a given command.
+        Especially useful for performing some action with the contents of a command
+        while rendering it after some point. 
+        
+        When called on an unregistered command this action registers this command 
+        instance to the current script context. if the operating instance is already 
+        registered, this effectively 'moves' the command within a script by creating 
+        and registering a deep copy to the pack while masking the previous instance. 
+        If a deep copy was made this method returns the new copy.
+
+        Args:
+            mask (bool, optional): If this command should be masked in the case it 
+                                   has already been added to the script context. 
+                                   Defaults to True.
+        
+        Returns:
+            BaseCommand | None: The deep copy of this instance if one was created.
+        """
+        if not self._is_registered:
+            self._register()
+        else:
+            instance = copy.deepcopy(self)
+            instance._register()
+            self.mask(mask)
+            return instance
+
 
     def _build_for_script(self) -> str | None:
         """Builds a command for insertion into a script.
@@ -93,6 +121,13 @@ class BaseCommand(ABC):
         if self.is_masked:
             return None
         return self.build()
+    
+    def _register(self) -> None:
+        if BaseCommand._CURRENT_CONTEXT.script.pack._build_dev or (not self.is_dev):
+            BaseCommand._CURRENT_CONTEXT.add_cmd(self)
+        else:
+            BaseCommand._CURRENT_CONTEXT.add_cmd(Comment(f"{self.__class__.__name__} command omitted for production", register=False))
+        self._is_registered = True
 
     def build(self) -> str:
         """Renders and validates a command instance for

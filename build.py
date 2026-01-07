@@ -14,8 +14,11 @@ with PackDSL(
     
     @pack.mcfn(sort="load")
     def load():
-        cmd.Clone(
+        clone_rift = cmd.Clone(
             (0, 0, 0), (3, 3, 3), (0, 100, 0), 
-            Blocks.STONE_SLAB({"type":"top"}),
-            source_dim="minecraft:the_nether"
+            Blocks.NETHERRACK, "move",
+            source_dim="minecraft:the_nether",
+            dest_dim="minecraft:overworld"
         )
+        cmd.Comment(f"Clone rift from {clone_rift.source_dim} with a volume of {clone_rift.volume} blocks")
+        clone_rift()
