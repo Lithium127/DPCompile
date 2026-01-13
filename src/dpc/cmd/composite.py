@@ -96,3 +96,14 @@ class ExecuteRandom(BaseCommand):
     
     def render(self):
         return cmd.TellRaw("a", "test")
+
+
+
+class If(BaseCommand):
+    """Executes a command if a specified condition is true. 
+    Includes sub-commands for `elif` and `else`. Conditions
+    are evaluated in-game and cannot be python boolean values.
+    """
+
+    def __init__(self, condition: t.Any, **kwargs):
+        super().__init__(**kwargs)
