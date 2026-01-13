@@ -44,6 +44,8 @@ class PackFileSystem:
         self.tree = defaultdict(list)
     
     def register(self, path: str, item: PackFile) -> None:
+        if " " in path:
+            raise PackError(f"Invalid path for '{type(item)}'. Requested path '{path}' includes invalid characters.")
         self.tree[path].append(item)
     
     def get_files(self, path: str) -> list[PackFile] | None:
