@@ -19,9 +19,3 @@ with PackDSL(
     @pack.mcfn(sort="load")
     def load():
         cmd.Log.info(f"'{pack.name}' Loaded! Using namespace '{pack.namespace}'.")
-        cmd.TellRaw(S.P, "This is a test")
-        test()
-    
-    @pack.mcfn()
-    def test():
-        cmd.Return(cmd.Clear(S.R))

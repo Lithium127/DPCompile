@@ -7,6 +7,8 @@ import typing as t
 
 from .bases import BaseCommand, CommandError, cmdargs
 
+from ..datatypes.version import require_version
+
 from ..datatypes.position import Position, positionlike
 from ..datatypes.entity import ensure_selector
 from ..datatypes.textelement import TextElement
@@ -138,7 +140,10 @@ class Clone(BaseCommand):
 
     def contains(self, value: Position) -> bool:
         """Returns true if the given position is contained within the 
-        bounding box of this commands source positions
+        bounding box of this commands source positions. Note that this
+        will not be functionally useful in a datapack runtime environment
+        however pre-set positions can be checked at compile time for
+        errors and similar known mistakes.
 
         Args:
             value (Position): The position to query
@@ -163,27 +168,62 @@ class Clone(BaseCommand):
 
     @property
     def begin(self) -> Position:
+        """The first position defined where blocks will be cloned from"""
         return self.bounds[0]
     
     @property
     def end(self) -> Position:
+        """The second position defined where blocks will be cloned from"""
         return self.bounds[1]
 
 
 class Return(BaseCommand):
+    """A command that can be embedded inside a function to control the execution of the 
+    function. Terminate the execution of the function and set the return value of the 
+    invoked function to an arbitrary integer value. By setting the return value to an 
+    arbitrary value, it can be used to record the execution results of `/function` 
+    commands with conditional branches and reflect them in subsequent function executions.
+    """
 
     value: int | BaseCommand
 
-    def __init__(self, value: int | BaseCommand, **kwargs):
+    def __init__(self, value: int | BaseCommand | None, **kwargs):
+        """A command that can control the execution of a script or function, returning
+        an arbitrary integer value or the result of another command. If a command is 
+        passed as the return value that command will be executed and the result will
+        be returned by the function at execution.
+
+        If the value passed is `None`, then a failure will be returned by this function.
+
+        Args:
+            value (int | BaseCommand | None): The integer or command that will be returned
+
+        Raises:
+            CommandError: If the return value is not an integer or a command
+        """
         super().__init__(**kwargs)
-        if not isinstance(value, (int, BaseCommand)):
+        require_version("1.20")
+        if not (isinstance(value, (int, BaseCommand)) or value is None):
             raise CommandError(f"Return value of type {type(value)} not permitted, requires (int, BaseCommand)")
+        if isinstance(value, BaseCommand) or value is None:
+            require_version("1.20.2")
         self.value = value
     
     def has_command(self) -> bool:
+        """Returns true if this instance of `Return` is returning
+        the result of another command.
+
+        Returns:
+            bool: If this instance returns a command
+        """
         return isinstance(self.value, BaseCommand)
+    
+    def has_fail(self) -> bool:
+        return (self.value is None)
 
     def render(self):
+        if self.has_fail():
+            return "return", "fail"
         return "return", "run" if self.has_command() else None, self.value
 
 class TellRaw(BaseCommand):

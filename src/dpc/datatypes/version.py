@@ -7,7 +7,7 @@ class VersionError(Exception):
 
 class Version:
     """Represents a version of the game, holding information for that version."""
-    
+    _CURRENT_VERSION: Version = None
     _VERSION_REFERENCE: dict[str, int] = {
         "1.13.0" : 4,
         "1.14.1" : 4,
@@ -326,3 +326,23 @@ class Versionable(object):
         return cls._ALLOWED_RANGE.contains(version)
 
 # TODO: Versioning class and function decorator that adds a VersionRange to an object.
+
+def require_version(version: str | Version | tuple, /) -> None:
+    """Check if the version of the currently building pack is greater
+    than or equal to the passed version. Otherwise throws a version
+    error. Used for determining if a feature is available in the current
+    version.
+
+    Args:
+        version (str | Version | tuple): The minimum required version for an error not to be thrown, inclusive
+
+    Raises:
+        VersionError: The pack version is less than the required version.
+    """
+    if Version._CURRENT_VERSION is None:
+        return
+    if not isinstance(version, Version):
+        version = Version(version) if isinstance(version, str) else Version(*version)
+    # Get pack version
+    if Version._CURRENT_VERSION < version:
+        raise VersionError(f"Minimum required version '{version}' not satisfied by pack version '{Version._CURRENT_VERSION}'.")

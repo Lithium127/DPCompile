@@ -190,6 +190,8 @@ class PackDSL(TemplateDecoratable):
             else:
                 # Print Error to console and continue
                 print(f"{type(e).__name__} error occurred in PackDSL building for version {self.version}. Error handling set to '{self._error_behavior}', continuing with build.")
+        finally:
+            Version._CURRENT_VERSION = None
         self._plugins.call_plugins("post_build", self)
     
     
@@ -206,7 +208,7 @@ class PackDSL(TemplateDecoratable):
         context ends, and ensures that required contexts
         are set properly."""
         # TODO: Register plugin hooks
-        
+        Version._CURRENT_VERSION = self.version
         if os.path.exists(self._file_root):
             shutil.rmtree(self._file_root, ignore_errors=True)
         os.makedirs(self._file_root, exist_ok=True)
@@ -239,6 +241,8 @@ class PackDSL(TemplateDecoratable):
                 file.write(path)
                 # Development logging of file content to console
                 self._plugins.call_plugins("render_file", self, file, path)
+        
+        Version._CURRENT_VERSION = None
     
     
     def with_plugins(self, *plugins: DPCPlugin) -> PackDSL:
