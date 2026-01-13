@@ -1,8 +1,13 @@
+from __future__ import annotations
+import typing as t
 import os
 
 from .dpc_plugin import DPCPlugin
 
 from ..IO.script import Script
+
+if t.TYPE_CHECKING:
+    from ..IO.packfile import PackFile
 
 class VerboseLoggingPlugin(DPCPlugin):
     """**[Builtin]** Plugin that displays information to the console 
@@ -11,8 +16,10 @@ class VerboseLoggingPlugin(DPCPlugin):
     """
 
     display: dict[str, bool]
+    type_mask: tuple[PackFile]
+    invert_mask: bool
 
-    def __init__(self, directory: bool = True, file: bool = True):
+    def __init__(self, directory: bool = True, file: bool = True, *, type_mask: PackFile | t.Iterable[PackFile] = None, invert_mask: bool = False):
         """Plugin that displays information to the console during the build
         process.
 
@@ -24,12 +31,25 @@ class VerboseLoggingPlugin(DPCPlugin):
             "file" : file,
             "dir" : directory
         }
+        self.type_mask = ()
+        if type_mask is not None:
+            self.type_mask = tuple((file for file in type_mask))
+        self.invert_mask = invert_mask
+
 
     def render_file(self, pack, file, path):
 
         if not self.display.get("file", False):
             return None
         
+        in_mask = False
+        for mask in self.type_mask:
+            if file.__class__ == mask:
+                in_mask = True
+        
+        if (not in_mask) or (in_mask and self.invert_mask):
+            return None
+
         content = file.render()
         if content is not None:
             print(f"\n[{file.full_name}]{(' : Script' + (' instance passed' if file._pass_self else '')) if isinstance(file, Script) else ''}")

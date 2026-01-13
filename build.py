@@ -3,6 +3,7 @@ from src.dpc import PackDSL, cmd
 from src.dpc.plugin.verbose_logging import VerboseLoggingPlugin
 
 from src.dpc import Entities, S
+from src.dpc import Script
 
 
 # Pack Creation
@@ -12,7 +13,7 @@ with PackDSL(
         "1.21.8",
         os.environ.get("LOCAL_BUILD_PATH")
     ).build_dev().with_plugins(
-        VerboseLoggingPlugin()
+        VerboseLoggingPlugin(file = False)
     ) as pack:
     
     @pack.mcfn(sort="load")
