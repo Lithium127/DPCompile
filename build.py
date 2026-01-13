@@ -19,3 +19,10 @@ with PackDSL(
     @pack.mcfn(sort="load")
     def load():
         cmd.Log.info(f"'{pack.name}' Loaded! Using namespace '{pack.namespace}'.")
+    
+    @pack.mcfn(dev=True)
+    def attempt_reload_changes():
+        cmd.Log.info(f"Reload initiated from {pack.name}.")
+        cmd.Reload()
+    
+    

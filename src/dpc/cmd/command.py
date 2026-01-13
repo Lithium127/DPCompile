@@ -177,6 +177,22 @@ class Clone(BaseCommand):
         return self.bounds[1]
 
 
+class Reload(BaseCommand):
+    """Reloads data packs and functions. If a data pack has invalid data 
+    (such as an invalid recipe format), changes are not applied and the 
+    game continues using the previous data"""
+
+    def __init__(self, **kwargs):
+        """Reloads data packs and functions. If a data pack has invalid data 
+        (such as an invalid recipe format), changes are not applied and the 
+        game continues using the previous data"""
+        super().__init__(**kwargs)
+        require_version("1.14.4")
+    
+    def render(self):
+        return "reload"
+
+
 class Return(BaseCommand):
     """A command that can be embedded inside a function to control the execution of the 
     function. Terminate the execution of the function and set the return value of the 
