@@ -5,15 +5,15 @@ checking errors at build time.
 from __future__ import annotations
 import typing as t
 
-from .bases import BaseCommand, cmdargs
+from .bases import BaseCommand, CommandError, cmdargs
 
 from ..datatypes.position import Position, positionlike
-from ..datatypes.selector import ensure_selector
+from ..datatypes.entity import ensure_selector
 from ..datatypes.textelement import TextElement
 from ..datatypes.block import Block, BlockState
 
 if t.TYPE_CHECKING:
-    from ..datatypes.selector import Selector, SelectorLiteral
+    from ..datatypes.entity import Selector, SelectorLiteral, PlayerSelectorLiteral
 
 
 
@@ -53,7 +53,7 @@ class Clear(BaseCommand):
     item: str | None
     max_count: int | None
 
-    def __init__(self, target: Selector | SelectorLiteral, item: str = None, max_count: int = None, **kwargs):
+    def __init__(self, target: Selector | PlayerSelectorLiteral, item: str = None, max_count: int = None, **kwargs):
         super().__init__(**kwargs)
         self.target = ensure_selector(target)
         self.item = item
@@ -169,13 +169,30 @@ class Clone(BaseCommand):
     def end(self) -> Position:
         return self.bounds[1]
 
+
+class Return(BaseCommand):
+
+    value: int | BaseCommand
+
+    def __init__(self, value: int | BaseCommand, **kwargs):
+        super().__init__(**kwargs)
+        if not isinstance(value, (int, BaseCommand)):
+            raise CommandError(f"Return value of type {type(value)} not permitted, requires (int, BaseCommand)")
+        self.value = value
+    
+    def has_command(self) -> bool:
+        return isinstance(self.value, BaseCommand)
+
+    def render(self):
+        return "return", "run" if self.has_command() else None, self.value
+
 class TellRaw(BaseCommand):
     """Sends a `TextElement` or `string` message to selected players"""
     
     target: Selector
     content: TextElement
 
-    def __init__(self, target: Selector | SelectorLiteral, content: TextElement | str, **kwargs):
+    def __init__(self, target: Selector | PlayerSelectorLiteral, content: TextElement | str, **kwargs):
         """Sends a TextElement message to players
 
         Args:
@@ -185,6 +202,8 @@ class TellRaw(BaseCommand):
         super().__init__(**kwargs)
 
         self.target = ensure_selector(target)
+        if not self.target.targets_player():
+            raise CommandError(self, f"Could not initialize {type(self).__name__} instance, Selector '{self.target}' targets entities that are not players.")
         self.content = TextElement(content)
 
     def render(self):
