@@ -50,14 +50,6 @@ def script(
 class TemplateError(Exception):
     pass
 
-class TemplateMeta(type):
-
-    def __getattribute__(self, name):
-        value = super().__getattribute__(name)
-        if isinstance(value, Script):
-            value._method_instance
-        return value
-
 class Template:
     """A `Template` is the implementation of classes within a 
     datapack. A template defines a set of scripts and data
@@ -80,6 +72,10 @@ class Template:
     ```
     """
 
+    _identifier: t.Any
+
+    _INSTANCE_REGISTRY: list[Template] = []
+
     def __init__(self):
         """Returns the instance of this class 
         with attached identifying information
@@ -98,6 +94,20 @@ class Template:
             identifier (t.Any): The descriptor that identifies objects 
                                 that match this template in the game world.
         """
+        pass
+
+    def __init_subclass__(cls):
+        true_init = cls.__init__
+        def wrapped_init(self, *args, **kwargs):
+            true_init(self, *args, **kwargs)
+            self.__class__._register_instance(self)
+        cls.__init__ = wrapped_init
+    
+    def __getattribute__(self, name):
+        value = super().__getattribute__(name)
+        if isinstance(value, Script) and BaseCommand._CURRENT_CONTEXT is not None:
+            value.method_instance = self
+        return value
     
     def to_command_str(self) -> str:
         """Converts this template to a command renderable
@@ -110,12 +120,78 @@ class Template:
         """
         return self.identifier
     
-    def _identifier(self) -> mctype:
-        return None
+    @classmethod
+    def _register_instance(cls, instance: Template) -> None:
+        if cls is not Template:
+            for base in cls.__bases__:
+                if hasattr(base, "_register_instance"):
+                    base._register_instance(instance)
+        if not cls._registry_has_instance(instance):
+            cls._INSTANCE_REGISTRY.append(instance)
+    
+    @classmethod
+    def _registry_has_instance(cls, instance: Template) -> None:
+        for item in cls._INSTANCE_REGISTRY:
+            if item.identifier == instance.identifier:
+                return True
+        return False
+    
+    @classmethod
+    def find(cls, identifier: t.Any) -> Template | None:
+        """Finds an instance of a template from a given
+        identifier.
 
+        If an object with a matching identifier is not 
+        found then a blank proxy object is created until
+        a real instance is constructed. When an object
+        with the same identifier is created, information
+        from the properly initialized instance is copied
+        to the stored instance that already exists in the
+        registry.
+
+        If a proxy object exists in the registry and a
+        properly initialized template instance with the
+        same identifier is never instanced then an error
+        will be thrown during build to avoid errors caused
+        by calling template scripts without a proper object
+
+        Args:
+            identifier (Any): The identifier to search the class
+                              registry for. Note that instances
+                              are added to all class registries
+                              that they inherit from, as such
+                              searching the `Template` base class
+                              for an instance will search all created
+                              instances. If two instances share the 
+                              same identifier the first one created 
+                              is returned.
+
+        Returns:
+            Template: The instance with a matching identifier. If two
+                      instances with the same identifier are in the
+                      registry then the one that was added first is
+                      returned.
+        """
+        for item in cls._INSTANCE_REGISTRY:
+            if item.identifier == identifier:
+                return item
+        # Make new instance of class and add to registry with correct title
+        instance = cls.__new__(cls)
+        instance.identifier = identifier
+        cls._register_instance(instance)
+        return None
+    
+    
     @property
-    def identifier(self) -> mctype:
-        return self._identifier()
+    def identifier(self) -> t.Any:
+        return self._identifier
+    
+    @identifier.setter
+    def identifier(self, value: t.Any) -> None:
+        self._identifier = value
+
+
+
 
 class TemplateDecoratable(ScriptDecoratable):
 
@@ -128,7 +204,6 @@ class TemplateDecoratable(ScriptDecoratable):
             for attr in dir(cls):
                 value = getattr(cls, attr, None)
                 if isinstance(value, Script):
-                    value.method_instance = cls()
                     if dev:
                         value._is_dev = dev
                     alternate_path = getattr(value, "alternate_path", "")

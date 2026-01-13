@@ -1,7 +1,10 @@
 import os
-from src.dpc import PackDSL, cmd, Blocks, Items, TagTable
+from src.dpc import PackDSL, cmd
 from src.dpc.plugin.verbose_logging import VerboseLoggingPlugin
-from src.dpc import Template, script
+
+from src.dpc import Entities, S
+
+
 # Pack Creation
 with PackDSL(
         "Testing Pack", "tcev", 
@@ -14,11 +17,10 @@ with PackDSL(
     
     @pack.mcfn(sort="load")
     def load():
-        clone_rift = cmd.Clone(
-            (0, 0, 0), (3, 3, 3), (0, 100, 0), 
-            Blocks.NETHERRACK, "move",
-            source_dim="minecraft:the_nether",
-            dest_dim="minecraft:overworld"
-        )
-        cmd.Comment(f"Clone rift from {clone_rift.source_dim} with a volume of {clone_rift.volume} blocks")
-        clone_rift()
+        cmd.Log.info(f"'{pack.name}' Loaded! Using namespace '{pack.namespace}'.")
+        cmd.TellRaw(S.P, "This is a test")
+        test()
+    
+    @pack.mcfn()
+    def test():
+        cmd.Return(cmd.Clear(S.R))

@@ -10,6 +10,7 @@ from .bases import Command as Command
 from .command import CallFunction as CallFunction
 from .command import Clear as Clear
 from .command import Clone as Clone
+from .command import Return as Return
 from .command import TellRaw as TellRaw
 
 # Composite Commands

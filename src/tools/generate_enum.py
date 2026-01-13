@@ -13,6 +13,7 @@ def version_sources():
         make_versioned_source(source)
 
 def build_enums():
+
     # Blocks
     build_enum_from_data(
         "Blocks",
@@ -26,6 +27,7 @@ def build_enums():
         ),
         [("..block", "Block")]
     )
+
     # Items
     build_enum_from_data(
         "Items",
@@ -38,6 +40,22 @@ def build_enums():
             # ("stack_size", "stackSize")
         ),
         [("..item", "Item")]
+    )
+
+    # Entitys
+    build_enum_from_data(
+        "Entities",
+        "Entity",
+        "entities.json",
+        ( # Requested Headers
+            ("id", "internalId"),
+            ("name", "name"),
+            ("display_name", "displayName"),
+            ("category", "category"),
+            ("width", "width"),
+            ("height", "height")
+        ),
+        [("..entity", "Entity")]
     )
 
 

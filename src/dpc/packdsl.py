@@ -352,3 +352,11 @@ class PackDSL(TemplateDecoratable):
     @property
     def _pack_reference(self) -> PackDSL:
         return self
+    
+    @property
+    def name(self) -> str:
+        return self._pack_name
+    
+    @property
+    def namespace(self) -> str:
+        return self._namespace

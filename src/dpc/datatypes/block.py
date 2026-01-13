@@ -17,6 +17,9 @@ class Block(MinecraftType):
     hardness: float
     version: VersionRange
     
+    @t.overload
+    def __init__(self, name: str, /) -> None: ...
+
     def __init__(self, 
                  name: str, 
                  *, 
@@ -38,9 +41,6 @@ class Block(MinecraftType):
             namespace (str | None, optional): The namespace for this block, interpreted 
                                               from name and will default to 'minecraft' 
                                               is none is given. Defaults to None.
-            tags (dict[str, t.Any] | None, optional): The given block tags for this block 
-                                                      as a dict containing `tag:value`. 
-                                                      Defaults to None.
         """
         if (":" in name) and (namespace is None):
             namespace, name = name.split(":")[:2]
@@ -62,15 +62,11 @@ class Block(MinecraftType):
             return False
         return self.id == value.id
     
-    def __str__(self):
-        return self.to_command_str()
-    
     def __call__(self, state: dict[str, t.Any] = None, tags: dict[str, t.Any] = None) -> BlockState:
         return BlockState(self, state, tags)
     
     def to_command_str(self):
         return f"{self.namespace}:{self.name}"
-
 
 
 class BlockState(MinecraftType):

@@ -2,13 +2,13 @@ from __future__ import annotations
 import typing as t
 from enum import Enum
 
-from .selector import ensure_selector
-
 from ..cmd.bases import Command, BaseCommand, get_current_pack
+
+from .entity import ensure_selector
 
 if t.TYPE_CHECKING:
     from ..packdsl import PackDSL
-    from .selector import Selector
+    from .entity import Selector
 
 
 class ScoreCriteria:

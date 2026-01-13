@@ -92,15 +92,18 @@ from .datatypes.scoreboard import ScoreboardClosure as ScoreboardClosure
 from .datatypes.block import Block as Block
 from .datatypes.block import BlockState as BlockState
 from .datatypes.block import BlockPredicate as BlockPredicate
+from .datatypes.entity import Entity
+from .datatypes.entity import Selector as Selector
+from .datatypes.entity import SelectorEnum as S
+from .datatypes.entity import ConditionalSelector as ConditionalSelector
 from .datatypes.item import Item as Item
 from .datatypes.item import ItemData as ItemData
 from .datatypes.position import Position as Position
 from .datatypes.textelement import TextElement as TextElement
-from .datatypes.selector import Selector as Selector
-from .datatypes.selector import ensure_selector as ensure_selector
 
 # MinecraftType Enums
 from .datatypes.enum.block_enum import Blocks as Blocks
+from .datatypes.enum.entity_enum import Entities as Entities
 from .datatypes.enum.item_enum import Items as Items
 
 # Commands

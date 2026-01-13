@@ -2428,17 +2428,37 @@
     ]
   },
   {
-    "id": 80,
-    "internalId": 80,
-    "name": "iron_golem}",
-    "displayName": "VillagerGolem (Iron Golem)",
+    "id": 68,
+    "internalId": 68,
+    "name": "iron_golem",
+    "displayName": "Iron Golem",
     "width": 1.4,
     "height": 2.7,
     "type": "mob",
     "versions": {
       "min": "1.13.0",
-      "max": "1.13.2"
-    }
+      "max": "1.21.8"
+    },
+    "category": "Passive mobs",
+    "metadataKeys": [
+      "shared_flags",
+      "air_supply",
+      "custom_name",
+      "custom_name_visible",
+      "silent",
+      "no_gravity",
+      "pose",
+      "ticks_frozen",
+      "living_entity_flags",
+      "health",
+      "effect_particles",
+      "effect_ambience",
+      "arrow_count",
+      "stinger_count",
+      "sleeping_pos",
+      "mob_flags",
+      "flags"
+    ]
   },
   {
     "id": 135,
@@ -2909,19 +2929,6 @@
     }
   },
   {
-    "id": 3,
-    "internalId": 3,
-    "name": "area_effect cloud",
-    "displayName": "Area Effect Cloud",
-    "width": null,
-    "height": 0.5,
-    "type": "object",
-    "versions": {
-      "min": "1.13.0",
-      "max": "1.13.2"
-    }
-  },
-  {
     "id": 50,
     "internalId": 50,
     "name": "activated_tnt",
@@ -3013,19 +3020,6 @@
     }
   },
   {
-    "id": 72,
-    "internalId": 72,
-    "name": "eye_of ender",
-    "displayName": "Eye of Ender",
-    "width": 0.25,
-    "height": 0.25,
-    "type": "object",
-    "versions": {
-      "min": "1.13.0",
-      "max": "1.13.2"
-    }
-  },
-  {
     "id": 73,
     "internalId": 73,
     "name": "thrown_potion",
@@ -3041,7 +3035,7 @@
   {
     "id": 75,
     "internalId": 75,
-    "name": "thrown_exp bottle",
+    "name": "thrown_exp_bottle",
     "displayName": "Thrown Exp Bottle",
     "width": 0.25,
     "height": 0.25,
@@ -3299,39 +3293,6 @@
       "chest",
       "strength",
       "variant"
-    ]
-  },
-  {
-    "id": 68,
-    "internalId": 68,
-    "name": "iron_golem",
-    "displayName": "Iron Golem",
-    "width": 1.4,
-    "height": 2.7,
-    "type": "mob",
-    "category": "Passive mobs",
-    "versions": {
-      "min": "1.14.0",
-      "max": "1.21.8"
-    },
-    "metadataKeys": [
-      "shared_flags",
-      "air_supply",
-      "custom_name",
-      "custom_name_visible",
-      "silent",
-      "no_gravity",
-      "pose",
-      "ticks_frozen",
-      "living_entity_flags",
-      "health",
-      "effect_particles",
-      "effect_ambience",
-      "arrow_count",
-      "stinger_count",
-      "sleeping_pos",
-      "mob_flags",
-      "flags"
     ]
   },
   {

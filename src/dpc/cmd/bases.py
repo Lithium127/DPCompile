@@ -23,7 +23,7 @@ class CommandError(Exception):
     command: BaseCommand
 
     def __init__(self, cmd: BaseCommand, *args):
-        super().__init__(f"Exception occurred in {cmd.__class__.__name__}, instance {object.__str__(cmd)}. ", *args)
+        super().__init__(f"Exception occurred in {cmd.__class__.__name__} command. " + ','.join(args))
         self.command = cmd
 
 
