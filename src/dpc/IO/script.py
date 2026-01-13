@@ -148,7 +148,6 @@ class Script(PackFile):
         if self._pass_self:
             args.append(self)
         func = getattr(self, "_content_func")
-        print(f"{self.name} called with {len(args)} arguments\n\t{self.name}({', '.join((str(arg) for arg in args))})")
         return func(*args)
     
     def render(self):

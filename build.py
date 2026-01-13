@@ -12,7 +12,7 @@ with PackDSL(
         "1.21.8",
         os.environ.get("LOCAL_BUILD_PATH")
     ).build_dev().with_plugins(
-        VerboseLoggingPlugin(file=False)
+        VerboseLoggingPlugin()
     ) as pack:
     
     @pack.mcfn(sort="load")
