@@ -4,7 +4,7 @@ import os
 
 from .dpc_plugin import DPCPlugin
 
-from ...dpc import cmd
+from .. import cmd
 
 if t.TYPE_CHECKING:
     from ..packdsl import PackDSL

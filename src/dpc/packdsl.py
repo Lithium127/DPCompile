@@ -19,7 +19,7 @@ if t.TYPE_CHECKING:
     from .IO.packfile import PackFile
     # from .module import Module
 
-from .plugin.dpc_plugin import PluginCollection, DPCPlugin
+from .plugins.dpc_plugin import PluginCollection, DPCPlugin
 
 
 

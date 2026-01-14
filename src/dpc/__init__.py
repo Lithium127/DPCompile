@@ -108,3 +108,6 @@ from .datatypes.enum.item_enum import Items as Items
 
 # Commands
 from . import cmd as cmd
+
+# Plugins
+from . import plugins as plugins
