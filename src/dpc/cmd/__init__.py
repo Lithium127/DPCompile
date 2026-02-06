@@ -10,6 +10,8 @@ from .bases import Command as Command
 from .command import CallFunction as CallFunction
 from .command import Clear as Clear
 from .command import Clone as Clone
+from .command import Execute as Execute
+from .command import Kill as Kill
 from .command import Reload as Reload
 from .command import Return as Return
 from .command import TellRaw as TellRaw

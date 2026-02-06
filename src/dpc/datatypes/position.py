@@ -89,10 +89,16 @@ class Position(MinecraftType):
     
     def __init__(self, *args):
         """Instances a new position, representing a single location in 3D space"""
+        self._mode = _PositionMode.ABSOLUTE
         if len(args) == 1:
             pos = args[0]
-            self.set_position(pos)
-            self.mode = _PositionMode.ABSOLUTE
+            if isinstance(pos, Position):
+                self._pos = pos._pos
+                self._mode = pos._mode
+                self._type = pos._type
+            else:
+                self.set_position(pos)
+                self.mode = _PositionMode.ABSOLUTE
         elif len(args) == 2:
             pos, mode = args
             self.set_position(pos)

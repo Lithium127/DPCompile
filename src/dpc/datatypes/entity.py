@@ -120,8 +120,8 @@ class Selector(MinecraftType):
     def __init__(self, target: SelectorLiteral):
         self.target = target.lstrip("@") # Remove any user-given prefix
     
-    def __call__(self, *arguments) -> ConditionalSelector:
-        return ConditionalSelector(self, *arguments)
+    def __call__(self, *arguments, **kwargs) -> ConditionalSelector:
+        return ConditionalSelector(self, *arguments, **kwargs)
     
     @property
     def target(self) -> str:

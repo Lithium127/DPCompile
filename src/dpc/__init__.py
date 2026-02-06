@@ -98,7 +98,7 @@ from .datatypes.entity import SelectorEnum as S
 from .datatypes.entity import ConditionalSelector as ConditionalSelector
 from .datatypes.item import Item as Item
 from .datatypes.item import ItemData as ItemData
-from .datatypes.position import Position as Position
+from .datatypes.position import Position as Pos
 from .datatypes.textelement import TextElement as TextElement
 
 # MinecraftType Enums

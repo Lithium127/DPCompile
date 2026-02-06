@@ -5,17 +5,17 @@ checking errors at build time.
 from __future__ import annotations
 import typing as t
 
-from .bases import BaseCommand, CommandError, cmdargs
+from .bases import BaseCommand, CommandError, cmdargs, cmdstr
 
 from ..datatypes.version import require_version
 
 from ..datatypes.position import Position, positionlike
-from ..datatypes.entity import ensure_selector
+from ..datatypes.entity import ensure_selector, SelectorEnum, Selector
 from ..datatypes.textelement import TextElement
 from ..datatypes.block import Block, BlockState
 
 if t.TYPE_CHECKING:
-    from ..datatypes.entity import Selector, SelectorLiteral, PlayerSelectorLiteral
+    from ..datatypes.entity import SelectorLiteral, PlayerSelectorLiteral
 
 
 
@@ -135,7 +135,7 @@ class Clone(BaseCommand):
         dest_dim_str = f"to {self.dest_dim}" if self.dest_dim is not None else None
         block_mask = f"filtered {self.block_mask}" if isinstance(self.block_mask, BlockState) else self.block_mask
 
-        return "clone", source_dim_str, self.begin, self.end, dest_dim_str, self.destination, block_mask, self.mode
+        return "clone", source_dim_str, self.begin, self.end, dest_dim_str, self.destination, block_mask, self.mode if self.block_mask is not None else None
     
 
     def contains(self, value: Position) -> bool:
@@ -176,6 +176,192 @@ class Clone(BaseCommand):
         """The second position defined where blocks will be cloned from"""
         return self.bounds[1]
 
+
+class Execute(BaseCommand):
+
+    class _Argument:
+        """Data holding class describing a single argument
+        in a compound command. Does nothing with the data
+        until rendering happens.
+        """
+
+        values: list[t.Any]
+
+        def __init__(self, *args):
+            self.values = [value for value in args]
+        
+        def render(self) -> str:
+            return cmdstr(*self.values)
+
+    arguments: list[_Argument]
+    cmd: BaseCommand | None
+
+    def __init__(self, cmd: BaseCommand | None = None, **kwargs):
+        """Executes another command but allows changing the executor, 
+        changing the position and angle it is executed at, adding 
+        preconditions, and storing its result.
+
+        Args:
+            cmd (BaseCommand, optional): The command this instance will execute. s. Defaults to None.
+        """
+        super().__init__(**kwargs)
+        self.cmd = cmd
+        self.arguments = []
+    
+    def render(self):
+        return "execute", *[arg.render() for arg in self.arguments], (f"run {self.cmd}") if self.cmd is not None else None
+    
+    def _add_argument(self, *args) -> Execute:
+        self.arguments.append(self._Argument(*args))
+        return self
+    
+    def Align(self, axis: t.Literal["x", "y", "z", "xy", "xz", "yz", "xyz"]) -> Execute:
+        """Updates the execution position, aligning to its current block position (integer coordinates). 
+        Applies only along specified axes. This is akin to rounding the coordinates (i.e., rounding it up 
+        if the decimal part is greater than or equal to 0.5, or down if less than 0.5)
+
+        Args:
+            axis (['x', 'y', 'z', 'xy', 'xz', 'yz', 'xyz']): The selection of axis to align to. Any non-repeating 
+                            combination of the characters 'x', 'y', and 'z' is valid. Axes can be declared in any 
+                            order, but they cannot duplicate. (For example, x, xz, zyx, or yz.)
+
+        Returns:
+            Execute: The execution instance
+        """
+        return self._add_argument("align", axis)
+    
+    def Anchored(self, anchor: t.Literal["eyes", "feet"]) -> Execute:
+        """Sets the execution anchor to the eyes or feet. Defaults to feet. Running positioned <pos> -> execute 
+        resets to feet. Effectively recenters local coordinates on either the eyes or feet, also changing the 
+        angle of the facing subcommand (of `/execute` and `/teleport`) works off of.
+
+        Args:
+            anchor (['eyes', 'feet']): The anchor for this object
+
+        Returns:
+            Execute: The execution instance
+        """
+        if not anchor in ["eyes", "feet"]:
+            raise CommandError("Invalid anchor passed to execution builder")
+        return self._add_argument("anchored", anchor)
+    
+    def Aas(self, target: SelectorLiteral | Selector) -> Execute:
+        """Shorthand for Execute.As(<target>).At(SelectorEnum.S). Sets the executor and the
+        position to match the passed selection.
+
+        Args:
+            target (SelectorLiteral | Selector): The target selector
+
+        Returns:
+            Execute: The execution instance
+        """
+        return self.As(target).At(SelectorEnum.S)
+
+    def As(self, target: SelectorLiteral | Selector) -> Execute:
+        """Sets the executor to target entity, without changing execution position, rotation, dimension, and anchor.
+
+        Args:
+            target (SelectorLiteral | Selector): The target selector
+
+        Returns:
+            Execute: The execution instance
+        """
+        return self._add_argument("as", target)
+
+    def At(self, target: SelectorLiteral | Selector) -> Execute:
+        """Sets the execution position, rotation, and dimension to match those of an entity; does not change executor.
+
+        Args:
+            target (SelectorLiteral | Selector): The target selector
+
+        Returns:
+            Execute: The execution instance
+        """
+        return self._add_argument("at", target)
+    
+    @t.overload
+    def Facing(self, target: Position) -> Execute:
+        """Sets the execution rotation to face a given point, as viewed from its anchor (either the eyes or the feet). Forks 
+        if <targets> or origin: target selects multiple entities. Terminates current branch if <targets> or origin: target 
+        fails to resolve to one or more entities (named players must be online).
+
+        Args:
+            target (Position): The position this command will face
+        """
+    @t.overload
+    def Facing(self, target: Selector, anchor: t.Literal["eyes", "feet"] = None) -> Execute:
+        """Sets the execution rotation to face a given point, as viewed from its anchor (either the eyes or the feet). Forks 
+        if <targets> or origin: target selects multiple entities. Terminates current branch if <targets> or origin: target 
+        fails to resolve to one or more entities (named players must be online).
+
+        Args:
+            target (Selector): The selector targeting the entity that will be faced
+            anchor (['eyes', 'feet'], optional): The anchor that this command will look at on the target entity. Defaults to None.
+        """
+    
+    def Facing(self, target: Position | Selector, anchor: t.Literal["eyes", "feet"] = None) -> Execute:
+        if isinstance(target, Selector):
+            return self._add_argument("facing", "entity", target, anchor or "feet")
+        return self._add_argument("facing", target)
+
+    def In(self, dim: str) -> Execute:
+        """Sets the execution dimension and execution position. Respects dimension scaling for relative and local coordinates: 
+        the execution position (only the X/Z part) is divided by 8 when changing from the Overworld to the Nether, and is 
+        multiplied by 8 when vice versa. Applies to custom dimensions as well.
+
+        Args:
+            dim (str): The target dimension to execute in
+        """
+        return self._add_argument("in", dim)
+    
+    def On(self, relation: t.Literal["attacker", "controller", "leasher", "origin", "owner", "passengers", "target", "vehicle"]) -> Execute:
+        """Executor is updated based on the relation with the executor entity (which changes the meaning of @s). Forks if 
+        passengers selects multiple entities. (Other relations can select only at most one entities.) Terminates current 
+        branch if the current executor is not an entity. Terminates current branch if the relation is not applicable to 
+        the current executor entity or there are no entities matching it.
+
+        A relation to the current executor entity:
+            `attacker`: the last entity that damaged the current executor entity in the previous 5 seconds. Note that damage types in minecraft:no_anger tag bypass the record of attacker. Interaction entities do not forget attacker after 5 seconds. Some mobs forget the attacker when ceasing their aggression.
+            `controller`: the entity that is riding and controlling the current executor entity. See Riding#Controlling for details.
+            `leasher`: the entity leading the current executor entity with a leash.
+            `origin`: the entity that cause the summon of the current executor entity. For example, the shooter of an arrow, the primer of a primed TNT entity.
+            `owner`: the owner of the current executor entity if it is a tameable animal.
+            `passengers`: all entities that are directly riding the current executor entity, no sub-passengers.
+            `target`: the target that the current executor entity intends on attacking. Interaction entities can select the last entity that interacted with them.
+            `vehicle`: the entity ridden by the current executor entity.
+
+        Args:
+            relation (['attacker', 'controller', 'leasher', 'origin', 'owner', 'passengers', 'target', 'vehicle']): The relation to next entity
+        """
+        require_version("1.19.4")
+        return self._add_argument("on", relation)
+
+    def Positioned(self, target: Position | SelectorLiteral | Selector | str) -> Execute:
+        """Sets the execution position, without changing execution rotation or dimension; can match an entity's position, or at one block 
+        above the Y-level stored in the specified heightmap. Forks if <targets> or origin: target selects multiple entities.
+        Terminates current branch if <targets> or origin: target fails to resolve to one or more entities (named players must be online).
+        """
+        if isinstance(target, str):
+            if target.startswith("@") or "[" in target or len(target) < 4:
+                target = ensure_selector(target)
+            else:
+                require_version("1.20")
+                return self._add_argument("positioned", "over", target)
+        if isinstance(target, Selector):
+            return self._add_argument("positioned", "as", target)
+        return self._add_argument("positioned", target)
+
+
+class Kill(BaseCommand):
+
+    target: Selector
+
+    def __init__(self, target: SelectorLiteral | Selector, **kwargs):
+        super().__init__(**kwargs)
+        self.target = ensure_selector(target)
+    
+    def render(self):
+        return "kill", self.target
 
 class Reload(BaseCommand):
     """Reloads data packs and functions. If a data pack has invalid data 
@@ -221,8 +407,12 @@ class Return(BaseCommand):
         require_version("1.20")
         if not (isinstance(value, (int, BaseCommand)) or value is None):
             raise CommandError(f"Return value of type {type(value)} not permitted, requires (int, BaseCommand)")
-        if isinstance(value, BaseCommand) or value is None:
+        
+        if  value is None:
+            require_version("1.20.3")
+        elif isinstance(value, BaseCommand):
             require_version("1.20.2")
+
         self.value = value
     
     def has_command(self) -> bool:
