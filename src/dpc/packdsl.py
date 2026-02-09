@@ -254,8 +254,9 @@ class PackDSL(TemplateDecoratable):
         Returns:
             PackDSL: The pack instance to enter context
         """
-        for plugin in plugins:
+        for index, plugin in enumerate(plugins):
             self._plugins.append(plugin)
+            plugin.on_register(self, index)
         return self
     
     def with_errors(self, behavior: t.Literal["strict", "ignore"]) -> PackDSL:
@@ -270,17 +271,21 @@ class PackDSL(TemplateDecoratable):
         self._build_dev = False
         return self
     
-    def add_script_to_taglist(self, script: Script, sort: t.Literal["tick", "load"] = "tick"):
+    def add_script_to_taglist(self, script: Script, on_tick: bool = False, on_load: bool = False):
         files: list[PackFile] = self.directory.get_files("data/minecraft/tags/function")
-        if files is not None:
-            for file in files:
-                if file.name == sort and isinstance(file, TagTable):
-                    file._entries.append(script)
-                    return
-        # Otherwise create the folder of given type
-        self.add_tag_table(
-            TagTable('function', sort, [script], namespace="minecraft")
-        )
+
+        for sort, required in [("tick", on_tick), ("load", on_load)]:
+            if not required: continue
+
+            if files is not None:
+                for file in files:
+                    if file.name == sort and isinstance(file, TagTable):
+                        file._entries.append(script)
+            else:
+                # Otherwise create the folder of given type
+                self.add_tag_table(
+                    TagTable('function', sort, [script], namespace="minecraft")
+                )
     
     
     def add_tag_table(self, table: TagTable) -> None:

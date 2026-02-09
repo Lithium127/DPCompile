@@ -26,12 +26,13 @@ class DevelopmentKit(DPCPlugin):
         self._add_toolkit_scripts(pack)
     
 
-    def dev_script(self, pack: PackDSL, name: str | None = None, sort: t.Literal["tick", "load"] | None = None, path: str = None):
+    def dev_script(self, pack: PackDSL, name: str | None = None, tick: bool = False, load: bool = False, path: str = None):
         """Combined shorthand to make development easier"""
         return pack.mcfn(
             name = name, 
             dev=True, 
-            sort = sort, 
+            tick = tick,
+            load = load, 
             path = self.tools_path + (f"/{path}" if path is not None else "")
         ) 
     

@@ -16,7 +16,7 @@ with PackDSL("Testing Pack", "tcev",
         VerboseLoggingPlugin(file = False)
     ) as pack:
     
-    @pack.mcfn(sort="load")
+    @pack.mcfn(load=True, tick=True, path="core")
     def load():
         cmd.Log.info(f"'{pack.name}' Loaded! Using namespace '{pack.namespace}'.")
     

@@ -95,6 +95,9 @@ class Script(PackFile):
     _parent: ScriptDecoratable
 
     _mask_on_empty: bool = False
+
+    _runs_on_tick: bool = False
+    _runs_on_load: bool = False
     
     def __init__(self, name: str, content: callable | None, *, pass_script: bool = False):
         """Represents a script file within a datapack that can hold commands and operations.
@@ -174,11 +177,20 @@ class Script(PackFile):
         preface = [
             Comment(f"This script was automatically generated for [{self.pack._pack_name}]").build(),
             Comment(f"MC Version: {self.pack.version} [{self.pack.version.pack_reference}]").build(),
-            # Comment(f"File Path: {self._parent}"),
             "", # Blank line for formatting
         ]
         if self._is_dev:
             preface.insert(2, Comment("Development Only").build())
+        
+        if self.is_tick_script or self.is_load_script:
+            terms = []
+            if self.is_tick_script: terms.append("game tick")
+            if self.is_load_script: terms.append("pack load")
+            if len(terms) == 2:
+                terms = " and ".join(terms)
+            else:
+                terms = terms[0]
+            preface.insert(2, Comment("Runs on " + terms + ".").build())
         
         script_desc = self._content_func.__doc__
         if script_desc is not None:
@@ -222,6 +234,14 @@ class Script(PackFile):
     def method_instance(self, value: t.Any) -> None:
         self._method_instance = value
         self._pass_self = False # Assume that the method does not want a self argument
+    
+    @property
+    def is_tick_script(self) -> bool:
+        return self._runs_on_tick
+    
+    @property
+    def is_load_script(self) -> bool:
+        return self._runs_on_load
 
 class RayCastScript(Script):
     """Represetns a script file that recursively iterates until either 
@@ -249,6 +269,65 @@ class RayCastScript(Script):
         """
         return Comment("This is a comment...")
 
+
+
+class ScriptDecorationClosure():
+    
+    _instance: ScriptDecoratable
+
+    _script_name: str
+    _development: bool
+    _is_tick: bool
+    _is_load: bool
+    _path_override: str | Path
+
+    def __init__(self, instance: ScriptDecoratable, name: str = None, *, dev: bool = False, tick: bool = False, load: bool = False, path: Path | str = None):
+        
+        self._instance = instance
+        
+        self._script_name = name
+        self._development = dev
+        self._is_tick = tick
+        self._is_load = load
+        self._path_override = path
+
+    def __call__(self, func: callable) -> Script:
+        return self._decorate(func)
+
+    def _decorate(self, func: callable) -> Script:
+        script = create_script_from_callable(
+            self._process_function(func), 
+            name=self._script_name, 
+            dev=self._development
+        )
+        self._instance.add_script(
+            script, 
+            tick=self._is_tick,
+            load=self._is_load,
+            alternate_path= self._path_override or ""
+        )
+        return script
+    
+    def _process_function(self, func: callable) -> callable:
+        return func
+
+    def dev(self, value: bool = True, /) -> t.Self:
+        self._development = value
+        return self
+
+    def tick(self, value: bool = True, /) -> t.Self:
+        self._is_tick = value
+        return self
+    
+    def load(self, value: bool = True, /) -> t.Self:
+        self._is_load = value
+        return self
+    
+    def path(self, value: str | Path, /) -> t.Self:
+        self._path_override = value
+        return self
+
+
 # TODO: Update storage method for scripts, as modules should be able to attach scripts directly without needing a parent
 class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
     """An abstract class that provides an object with
@@ -269,6 +348,8 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         return ...
     ```
     """
+
+    _SCRIPT_DEC_CLOSURE = ScriptDecorationClosure
     
     _script_collectors: list[Script]
     
@@ -276,7 +357,7 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         super().__init__()
         self._script_collectors = []
     
-    def mcfn(self, name: str = None, *, dev: bool = False, sort: t.Literal['tick', 'load'] | None = None, path: Path | str = None) -> callable:
+    def mcfn(self, name: str = None, path: str | Path = None,  **kwargs) -> ScriptDecorationClosure:
         """Decorates a function to create a script.
         Adds a `.mcfunction` file, or `script`, to the parent object's collectors 
         attribute.
@@ -379,17 +460,14 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         Returns:
             Script: The new script instance that wraps the function passed
         """
+        closure_type = self._build_decorator_closure()
+        return closure_type(instance = self, name = name, path=path, **kwargs)
+    
+    def _build_decorator_closure(self):
+        cls = self._SCRIPT_DEC_CLOSURE
         
-        def inner(func: function) -> callable:
-            script = create_script_from_callable(func, name=name, dev=dev)
-            is_ticking = None if sort is None else (sort == 'tick')
-            self.add_script(
-                script, 
-                ticking=is_ticking,
-                alternate_path= path or ""
-            )
-            return script
-        return inner
+        # Check if class is callable
+        return cls
     
     def mcraycast(self, name: str = None, *, desc: str = None, dev: bool = False) -> callable:
         
@@ -405,7 +483,7 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
             return script
         return inner
     
-    def add_script(self, script: Script, ticking: bool | None, *, alternate_path: str = "") -> None:
+    def add_script(self, script: Script, tick: bool = False, load: bool = False, *, alternate_path: str = "") -> None:
         """Adds a given script instance to this objects
         registry.
 
@@ -415,17 +493,21 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         
         script._parent = self
         script.path = alternate_path
+        script._runs_on_tick = tick
+        script._runs_on_load = load
         
         self._pack_reference.register_file(
             f"data/{self._pack_reference._namespace}/function{'/'+alternate_path if len(alternate_path) > 0 else ''}",
             script
         )
-        if ticking is not None :
-            if self._pack_reference._build_dev or not script._is_dev:
-                self._pack_reference.add_script_to_taglist(
-                    script=script,
-                    sort = 'tick' if ticking else 'load'
-                )
+
+        if self._pack_reference._build_dev or not script._is_dev:
+            self._pack_reference.add_script_to_taglist(
+                script=script,
+                on_tick=tick,
+                on_load=load
+            )
+        
         # Renders the script proactively for scoreboard discovery
         self._script_collectors.append(script)
     

@@ -23,15 +23,6 @@ class DPCPlugin(ABC):
     
     """
 
-    def pre_build(self, pack: 'PackDSL') -> None:
-        """Runs before the pack context is entered, meaning
-        no content except for the base pack config and data
-        from other plugins is added to the pack.
-
-        Args:
-            pack (PackDSL): The pack this plugin is registered to
-        """
-    
     def post_build(self, pack: 'PackDSL') -> None:
         """Runs when the pack context exits, after all
         resources have been added to the build directory.
@@ -40,18 +31,13 @@ class DPCPlugin(ABC):
             pack (PackDSL): The pack this plugin is registered to
         """
 
-    def render_file(self, pack: PackDSL, file: PackFile, path: str) -> None:
-        """A hook for rendering a file, called after
-        a file has finished rendering but before the
-        file is added to the directory.
-
-        If multiple plugins use this method, the hooks
-        are called in the order that the plugins are
-        added to the pack.
+    def pre_build(self, pack: 'PackDSL') -> None:
+        """Runs before the pack context is entered, meaning
+        no content except for the base pack config and data
+        from other plugins is added to the pack.
 
         Args:
             pack (PackDSL): The pack this plugin is registered to
-            file (PackFile): The rendered pack file
         """
     
     def on_build_error(self, pack: PackDSL, exc: Exception) -> None:
@@ -70,6 +56,30 @@ class DPCPlugin(ABC):
         Args:
             pack (PackDSL): The pack that this plugin is registered to
             exc (Exception): The exception thrown
+        """
+    
+    def on_register(self, pack: PackDSL, index: int) -> None:
+        """A hook that runs when this plugin is registered
+        to a pack. The index that this plugin is added at
+        is passed as well.
+
+        Args:
+            pack (PackDSL): The pack that this plugin is registered to
+            index (int): The index that this plugin was registered in
+        """
+
+    def render_file(self, pack: PackDSL, file: PackFile, path: str) -> None:
+        """A hook for rendering a file, called after
+        a file has finished rendering but before the
+        file is added to the directory.
+
+        If multiple plugins use this method, the hooks
+        are called in the order that the plugins are
+        added to the pack.
+
+        Args:
+            pack (PackDSL): The pack this plugin is registered to
+            file (PackFile): The rendered pack file
         """
 
 
