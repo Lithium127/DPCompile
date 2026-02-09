@@ -78,33 +78,33 @@ from .template import TemplateDecoratable as TemplateDecoratable
 from .template import TemplateError as TemplateError
 
 # Core Datatypes
-from .datatypes.mctype import MinecraftType as MinecraftType
-from .datatypes.mctype import ensure_mctype as ensure_mctype
-from .datatypes.literal import Literal as Literal
-from .datatypes.version import Version as Version
-from .datatypes.version import Versionable as Versionable
-from .datatypes.version import VersionRange as VersionRange
-from .datatypes.scoreboard import ScoreCriteria as ScoreCriteria
-from .datatypes.scoreboard import Scoreboard as Scoreboard
-from .datatypes.scoreboard import ScoreboardClosure as ScoreboardClosure
+from .mctypes.mctype import MinecraftType as MinecraftType
+from .mctypes.mctype import ensure_mctype as ensure_mctype
+from .mctypes.literal import Literal as Literal
+from .mctypes.version import Version as Version
+from .mctypes.version import Versionable as Versionable
+from .mctypes.version import VersionRange as VersionRange
+from .mctypes.scoreboard import ScoreCriteria as ScoreCriteria
+from .mctypes.scoreboard import Scoreboard as Scoreboard
+from .mctypes.scoreboard import ScoreboardClosure as ScoreboardClosure
 
 # MinecraftType Datatypes
-from .datatypes.block import Block as Block
-from .datatypes.block import BlockState as BlockState
-from .datatypes.block import BlockPredicate as BlockPredicate
-from .datatypes.entity import Entity
-from .datatypes.entity import Selector as Selector
-from .datatypes.entity import SelectorEnum as S
-from .datatypes.entity import ConditionalSelector as ConditionalSelector
-from .datatypes.item import Item as Item
-from .datatypes.item import ItemData as ItemData
-from .datatypes.position import Position as Pos
-from .datatypes.textelement import TextElement as TextElement
+from .mctypes.block import Block as Block
+from .mctypes.block import BlockState as BlockState
+from .mctypes.block import BlockPredicate as BlockPredicate
+from .mctypes.entity import Entity
+from .mctypes.entity import Selector as Selector
+from .mctypes.entity import SelectorEnum as S
+from .mctypes.entity import ConditionalSelector as ConditionalSelector
+from .mctypes.item import Item as Item
+from .mctypes.item import ItemData as ItemData
+from .mctypes.position import Position as Pos
+from .mctypes.textelement import TextElement as TextElement
 
 # MinecraftType Enums
-from .datatypes.enum.block_enum import Blocks as Blocks
-from .datatypes.enum.entity_enum import Entities as Entities
-from .datatypes.enum.item_enum import Items as Items
+from .mctypes.enum.block_enum import Blocks as Blocks
+from .mctypes.enum.entity_enum import Entities as Entities
+from .mctypes.enum.item_enum import Items as Items
 
 # Commands
 from . import cmd as cmd

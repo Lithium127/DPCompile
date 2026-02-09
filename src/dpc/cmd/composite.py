@@ -9,7 +9,7 @@ import typing as t
 from .bases import BaseCommand
 from . import command as cmd
 
-from ..datatypes.textelement import TextElement
+from ..mctypes.textelement import TextElement
 
 if t.TYPE_CHECKING:
     from ..IO.script import Script

@@ -10,9 +10,9 @@ from .template import TemplateDecoratable
 from .IO.mcmeta import McMeta
 from .IO.script import Script, ScriptError
 from .IO.tagtable import TagTable
-from .datatypes.version import Version
+from .mctypes.version import Version
 
-from .datatypes.scoreboard import Scoreboard
+from .mctypes.scoreboard import Scoreboard
 
 
 if t.TYPE_CHECKING:
@@ -259,7 +259,7 @@ class PackDSL(TemplateDecoratable):
             plugin.on_register(self, index)
         return self
     
-    def with_errors(self, behavior: t.Literal["strict", "ignore"]) -> PackDSL:
+    def with_error_behavior(self, behavior: t.Literal["strict", "ignore"]) -> PackDSL:
         self._error_behavior = behavior
         return self
     

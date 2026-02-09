@@ -7,23 +7,14 @@ from src.dpc import Script
 from src.dpc import Pos
 
 
-# Pack Creation
 with PackDSL("Testing Pack", "tcev", 
-        "This is a test description", 
-        "1.21.8", os.environ.get("LOCAL_BUILD_PATH")
-    ).build_dev(
+        "description", "1.21.8",
+        os.environ.get("LOCAL_BUILD_PATH")
     ).with_plugins(
-        VerboseLoggingPlugin(file = False)
-    ) as pack:
+        VerboseLoggingPlugin()
+    ).build_dev() as pack:
     
-    @pack.mcfn(load=True, tick=True, path="core")
-    def load():
-        cmd.Log.info(f"'{pack.name}' Loaded! Using namespace '{pack.namespace}'.")
-    
-    @pack.mcfn()
-    def abb_nether():
-        cmd.Execute(abberate()).Positioned(Pos(0, 0, 0)).In("minecraft:the_nether")
 
     @pack.mcfn()
-    def abberate():
-        cmd.Clone(Pos(-3, -3, -3, "rel"), Pos(3, 3, 3, "rel"), Pos(3, 3, 3), dest_dim="minecraft:overworld")
+    def load():
+        cmd.Log.info(f"'{pack.name}' loaded using namespace '{pack.namespace}'.")

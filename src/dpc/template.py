@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .cmd import CallFunction
 from .cmd.bases import BaseCommand
-from .datatypes import mctype
+from .mctypes import mctype
 
 def script(
         name: str = None, 

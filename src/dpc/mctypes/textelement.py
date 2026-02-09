@@ -7,7 +7,7 @@ import json
 from .mctype import MinecraftType
 
 if t.TYPE_CHECKING:
-    from .selector import Selector
+    from .entity import Selector
 
 class TextElement(MinecraftType):
     """Represents a JSON encoded text element that is parsable by minecraft commands"""

@@ -7,15 +7,15 @@ import typing as t
 
 from .bases import BaseCommand, CommandError, cmdargs, cmdstr
 
-from ..datatypes.version import require_version
+from ..mctypes.version import require_version
 
-from ..datatypes.position import Position, positionlike
-from ..datatypes.entity import ensure_selector, SelectorEnum, Selector
-from ..datatypes.textelement import TextElement
-from ..datatypes.block import Block, BlockState
+from ..mctypes.position import Position, positionlike
+from ..mctypes.entity import ensure_selector, SelectorEnum, Selector
+from ..mctypes.textelement import TextElement
+from ..mctypes.block import Block, BlockState
 
 if t.TYPE_CHECKING:
-    from ..datatypes.entity import SelectorLiteral, PlayerSelectorLiteral
+    from ..mctypes.entity import SelectorLiteral, PlayerSelectorLiteral
 
 
 

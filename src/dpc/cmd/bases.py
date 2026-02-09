@@ -5,7 +5,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Iterable
 import copy
 
-from ..datatypes.version import Version
+from ..mctypes.version import Version
 
 if t.TYPE_CHECKING:
     from ..IO.script import ScriptContext, Script
