@@ -165,3 +165,5 @@ Testing Pack/
 .ideas.md
 
 */tools/version_files
+.vscode
+.vscode/launch.json
