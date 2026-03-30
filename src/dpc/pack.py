@@ -19,8 +19,8 @@ class PackError(Exception):
     pack: PackBase
 
     def __init__(self, pack: PackBase, *args):
-        super().__init__(f"Exception occurred in Pack {self.pack} (namespace: {self.pack.namespace})\n", *args)
         self.pack = pack
+        super().__init__(f"Exception occurred in Pack {self.pack} (namespace: {self.pack.namespace})\n" + ". ".join(args))
 
 class PackBuildError(PackError):
     
@@ -289,6 +289,7 @@ class PackBase:
         if os.path.exists(self._build_dir):
             shutil.rmtree(self._build_dir, ignore_errors=True)
         os.makedirs(self._build_dir, exist_ok=True)
+        return True
 
 
     def _populate_files(self) -> None:
@@ -304,7 +305,7 @@ class PackBase:
         
         for path in self._directory.tree.keys():
             # Join relative paths to build path
-            abs_path = os.path.join(self._file_root, path) if path != "/" else self._file_root
+            abs_path = os.path.join(self._build_dir, path) if path != "/" else self._build_dir
 
             renderable_files = []
             for file in self._directory.get_files(path):

@@ -9,12 +9,12 @@ from ..mctypes.version import Version
 
 if t.TYPE_CHECKING:
     from ..IO.script import ScriptContext, Script
-    from ..packdsl import PackDSL
+    from ..pack import PackBase
 
 
-def get_current_pack() -> PackDSL:
+def get_current_pack() -> PackBase:
     if BaseCommand._CURRENT_CONTEXT is None:
-        raise ValueError("get_current_pack() called without PackDSL context being attached")
+        raise ValueError("get_current_pack() called without PackBase context being attached")
     return BaseCommand._CURRENT_CONTEXT.script.pack
 
 
@@ -123,7 +123,7 @@ class BaseCommand(ABC):
         return self.build()
     
     def _register(self) -> None:
-        if BaseCommand._CURRENT_CONTEXT.script.pack._build_dev or (not self.is_dev):
+        if BaseCommand._CURRENT_CONTEXT.script.pack._build_flag.is_dev or (not self.is_dev):
             BaseCommand._CURRENT_CONTEXT.add_cmd(self)
         else:
             BaseCommand._CURRENT_CONTEXT.add_cmd(Comment(f"{self.__class__.__name__} command omitted for production", register=False))

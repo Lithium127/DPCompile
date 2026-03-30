@@ -38,7 +38,7 @@ class FileParentable(metaclass=ABCMeta):
         """Returns the required reference to a pack to enable decoration
 
         Returns:
-            PackDSL: The reference to the parent pack
+            PackBase: The reference to the parent pack
         """
         pass
     
@@ -63,13 +63,13 @@ class PackFile(ABC):
     
     ```python
     # Simplest case by which a file can be rendered
-    with PackDSL(...) as pack:
+    with PackBase(...) as pack:
         file = PackFile(pack, "test.txt")
         file.write() # Unmanaged write call, attach file to pack or module
     ```
     """
     
-    _p: PackDSL
+    _p: PackBase
     _is_dev: bool
     extension: str
     name: str
@@ -81,12 +81,12 @@ class PackFile(ABC):
         """Creates a representation of a file contained within a pack directory.
 
         ```python
-        with PackDSL(out_dir="/path/to/build/dir") as pack:
+        with PackBase(out_dir="/path/to/build/dir") as pack:
             PackFile(pack, "relative/path/to/file.txt")
         ```
         
         Args:
-            pack (PackDSL): The parent pack or module, attributes from this
+            pack (PackBase): The parent pack or module, attributes from this
                             parent will be pulled to determine the location
                             this file should be created at, all parents
                             require a `build_dir` attribute that holds a
@@ -141,7 +141,7 @@ class PackFile(ABC):
     def write(self, path: str | None = None) -> None:
         """Writes this file to the pack via the given directory"""
         use_path = path or self.path
-        full = os.path.join(self.pack._file_root, use_path) if use_path != "/" else self.pack._file_root
+        full = os.path.join(self.pack._build_dir, use_path) if use_path != "/" else self.pack._file_root
         os.makedirs(os.path.dirname(full), exist_ok=True)
         content = self.render()
         # Only write file if content exists
@@ -173,12 +173,12 @@ class PackFile(ABC):
         return True
     
     
-    def set_pack_parent(self, pack: PackDSL) -> None:
+    def set_pack_parent(self, pack: PackBase) -> None:
         """Sets a given pack as the parent for this
         packfile.
 
         Args:
-            pack (PackDSL): The pack that parents this file
+            pack (PackBase): The pack that parents this file
         """
         self._p = pack
     
@@ -192,7 +192,7 @@ class PackFile(ABC):
         self._path = other if isinstance(other, Path) else Path(other)
     
     @property
-    def pack(self) -> PackDSL:
+    def pack(self) -> PackBase:
         """A reference to the pack that parents this file. 
         This attribute is only set when the file is attached 
         to a pack for automatic rendering"""
