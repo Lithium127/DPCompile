@@ -75,7 +75,7 @@ class Log(BaseCommand):
     def render(self):
         # TODO: Replace selector with entity selector enum
         script_name = (self._script.name or 'N/A')
-        if (self._script._parent != self._script.pack):
+        if (self._script._parent._pack_reference != self._script.pack):
             script_name = (f"{self._script._parent.__class__.__name__}.{script_name}")
         
         instance = TextElement(
