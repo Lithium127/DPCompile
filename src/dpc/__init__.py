@@ -113,11 +113,5 @@ from . import plugins as plugins
 from .pack import PackBase as PackBase
 from .pack import PackError as PackError
 
-from .datapack import Datapack
+from .datapack import Datapack as Datapack
 
-
-
-
-
-#   P1   |   P1*   |   P0    |   P2    |   P3    |   P2    |   P3    |   !P4   |   P2*   |   P3*   |   P4*   |    P0    |    P5     |   !P6*    |    P5*    |
-# 0 - 10 | 10 - 20 | 20 - 25 | 25 - 35 | 35 - 45 | 45 - 55 | 55 - 60 | 60 - 70 | 70 - 75 | 75 - 80 | 80 - 85 | 85 - 100 | 100 - 105 | 105 - 115 | 115 - 120 |
