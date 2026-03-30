@@ -4,7 +4,7 @@ import typing as t
 
 if t.TYPE_CHECKING:
     from ..IO.packfile import PackFile
-    from ..packdsl import PackDSL
+    from ..pack import PackBase
 
 
 class DPCPluginError(Exception):
@@ -23,7 +23,7 @@ class DPCPlugin(ABC):
     
     """
 
-    def post_build(self, pack: 'PackDSL') -> None:
+    def post_build(self, pack: PackBase) -> None:
         """Runs when the pack context exits, after all
         resources have been added to the build directory.
 
@@ -31,7 +31,7 @@ class DPCPlugin(ABC):
             pack (PackDSL): The pack this plugin is registered to
         """
 
-    def pre_build(self, pack: 'PackDSL') -> None:
+    def pre_build(self, pack: PackBase) -> None:
         """Runs before the pack context is entered, meaning
         no content except for the base pack config and data
         from other plugins is added to the pack.
@@ -40,7 +40,7 @@ class DPCPlugin(ABC):
             pack (PackDSL): The pack this plugin is registered to
         """
     
-    def on_build_error(self, pack: PackDSL, exc: Exception) -> None:
+    def on_build_error(self, pack: PackBase, exc: Exception) -> None:
         """A hook that runs when a pack encounters an
         exception during the building process.
 
@@ -49,7 +49,7 @@ class DPCPlugin(ABC):
             exc (Exception): The exception thrown
         """
     
-    def on_def_error(self, pack: PackDSL, exc: Exception) -> None:
+    def on_def_error(self, pack: PackBase, exc: Exception) -> None:
         """A hook that runs when a pack encounter an
         exception in the definition process.
 
@@ -58,7 +58,7 @@ class DPCPlugin(ABC):
             exc (Exception): The exception thrown
         """
     
-    def on_register(self, pack: PackDSL, index: int) -> None:
+    def on_register(self, pack: PackBase, index: int) -> None:
         """A hook that runs when this plugin is registered
         to a pack. The index that this plugin is added at
         is passed as well.
@@ -68,7 +68,7 @@ class DPCPlugin(ABC):
             index (int): The index that this plugin was registered in
         """
 
-    def render_file(self, pack: PackDSL, file: PackFile, path: str) -> None:
+    def render_file(self, pack: PackBase, file: PackFile, path: str) -> None:
         """A hook for rendering a file, called after
         a file has finished rendering but before the
         file is added to the directory.

@@ -507,6 +507,10 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
                 on_tick=tick,
                 on_load=load
             )
+    
+
+    def add_script_to_taglist(self, script: Script, on_tick: bool, on_load: bool) -> None:
+        pass
         
     
     def _prerender_scripts(self) -> None:

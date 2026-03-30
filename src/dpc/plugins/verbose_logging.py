@@ -62,7 +62,7 @@ class VerboseLoggingPlugin(DPCPlugin):
         
         # Display entire pack directory contents
         print("\nPack Contents:\n---")
-        directory = {pack._pack_name : VerboseLoggingPlugin.dir_to_dict(pack._file_root)}
+        directory = {pack._pack_name : VerboseLoggingPlugin.dir_to_dict(pack._build_dir)}
 
         def traverse_dir(tree, bars: list[bool] = [True]):
             for index, entry in enumerate(tree):

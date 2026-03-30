@@ -23,7 +23,7 @@ class DatapackContext(PackContext, ScriptDecoratable):
         for sort, required in [("tick", on_tick), ("load", on_load)]:
             if not required: continue
 
-            if files is not None:
+            if len(files) > 0:
                 for file in files:
                     if file.name == sort and isinstance(file, TagTable):
                         file._entries.append(script)

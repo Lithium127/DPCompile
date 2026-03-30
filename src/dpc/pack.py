@@ -195,6 +195,19 @@ class PackBase:
         return f"{object.__str__(self)}"
 
 
+    def with_plugins(self, *plugins: DPCPlugin) -> t.Self:
+        """Registers the included plugins with the pack,
+        enabling runtime hooks and helper methods.
+
+        Returns:
+            PackDSL: The pack instance to enter context
+        """
+        for index, plugin in enumerate(plugins):
+            self._add_plugin(plugin)
+            plugin.on_register(self, index)
+        return self
+
+
     def _obtain_safe_context_type(self) -> PackContext:
         """Produces a safe context type for opening a pack subclass
         context. This context will be instanced and returned as an
