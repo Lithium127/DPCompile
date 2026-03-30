@@ -45,7 +45,7 @@ class Version:
     data: tuple[int, int, int]
     
     @t.overload
-    def __init__(self, version: str) -> None:
+    def __init__(self, version: str, /) -> None:
         """Represents a version of the game. Data given from
         a dot seperated string representing the major, minor
         and patch number of the version
@@ -58,7 +58,7 @@ class Version:
         ...
     
     @t.overload
-    def __init__(self, major: int, minor: int, patch: int) -> None: 
+    def __init__(self, major: int, minor: int, patch: int, /) -> None: 
         """Represents a version of the game. Data given from
         each seperate argument.
 

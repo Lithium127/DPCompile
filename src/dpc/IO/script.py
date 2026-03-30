@@ -126,14 +126,15 @@ class Script(PackFile):
         self._ctx = None
         self._is_rendered = False
     
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, embed: bool = False, **kwargs):
         # Run if pack is building commands AND function was called from another location
         if (BaseCommand._CURRENT_CONTEXT is not None):
             # Case for calling within other functions
             if not (BaseCommand._CURRENT_CONTEXT is self.ctx) or (self._call_depth >= 1):
                 # Omit call function if this is considered 'dev' unless otherwise
-                kwargs["dev"] = self._is_dev or kwargs.get("dev", False)
-                return self.get_command(**kwargs)
+                if not embed:
+                    kwargs["dev"] = self._is_dev or kwargs.get("dev", False)
+                    return self.get_command(**kwargs)
         
         # Case for out of context calls
         self._call_depth += 1 # Depth for recursion checking
@@ -153,12 +154,14 @@ class Script(PackFile):
         func = getattr(self, "_content_func")
         return func(*args)
     
-    def render(self):
+    def _populate_context(self) -> None:
         if not self._is_rendered:
             with self.ctx:
                 self() # Call the content function
             self._is_rendered = True
-        
+    
+    def render(self):
+        self._populate_context()
         
         content = []
         
@@ -351,11 +354,6 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
 
     _SCRIPT_DEC_CLOSURE = ScriptDecorationClosure
     
-    _script_collectors: list[Script]
-    
-    def __init__(self):
-        super().__init__()
-        self._script_collectors = []
     
     def mcfn(self, name: str = None, path: str | Path = None,  **kwargs) -> ScriptDecorationClosure:
         """Decorates a function to create a script.
@@ -466,6 +464,8 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
     def _build_decorator_closure(self):
         cls = self._SCRIPT_DEC_CLOSURE
         
+        if not issubclass(cls, ScriptDecorationClosure):
+            raise ValueError(f"Exception producing safe script closure type. Type {cls} does not inherit from type {ScriptDecorationClosure}")
         # Check if class is callable
         return cls
     
@@ -496,31 +496,21 @@ class ScriptDecoratable(FileParentable, metaclass=ABCMeta):
         script._runs_on_tick = tick
         script._runs_on_load = load
         
-        self._pack_reference.register_file(
-            f"data/{self._pack_reference._namespace}/function{'/'+alternate_path if len(alternate_path) > 0 else ''}",
-            script
+        self.add_file(
+            script,
+            f"data/{self._pack_reference._namespace}/function{'/'+alternate_path if len(alternate_path) > 0 else ''}"
         )
 
-        if self._pack_reference._build_dev or not script._is_dev:
-            self._pack_reference.add_script_to_taglist(
+        if self._pack_reference._build_flag.is_dev or not script._is_dev:
+            self.add_script_to_taglist(
                 script=script,
                 on_tick=tick,
                 on_load=load
             )
         
-        # Renders the script proactively for scoreboard discovery
-        self._script_collectors.append(script)
     
     def _prerender_scripts(self) -> None:
-        """Internal function to render all scripts
-        attached to this object at once to resolve
-        pathing conflicts and obtain scoreboards.
-        
-        Also pre-renders modules and attaches the
-        scripts contained to the pack directory
-        """
-        for script in self._script_collectors:
-            script.render()
+        raise NotImplementedError("This method must be implemented")
     
 
 def create_script_from_callable(func: callable, *, name: str = None, dev: bool = False,  instance: object = None) -> Script:
@@ -543,7 +533,7 @@ def create_script_from_callable(func: callable, *, name: str = None, dev: bool =
             
     
     script = Script(
-        name = name or func.__name__.lstrip("__").rstrip("__"),
+        name = name or func.__name__,
         content = func,
         pass_script=pass_script
     )

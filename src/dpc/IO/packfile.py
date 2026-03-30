@@ -8,6 +8,7 @@ from abc import ABC, ABCMeta, abstractmethod
 
 if t.TYPE_CHECKING:
     from ..packdsl import PackDSL
+    from ..pack import PackBase
 
 class FileParentable(metaclass=ABCMeta):
     """An abstract interface to give a class the required properties to parent packfiles
@@ -28,21 +29,12 @@ class FileParentable(metaclass=ABCMeta):
     ```
     """
     
-    # TODO: Depricate collectors, use directory from packdsl
-    _collectors: list[PackFile] = []
-    """The list of files this instance is parent to"""
-    
-    def add_file(self, file: PackFile) -> None:
-        """Adds a given file to this instance.
-
-        Args:
-            file (PackFile): The file to add
-        """
-        self._collectors.append(file)
+    def add_file(self, file: PackFile, path: str | None = None) -> None:
+        raise ValueError("Must override add_file behavior")
     
     @property
     @abstractmethod
-    def _pack_reference(self) -> PackDSL:
+    def _pack_reference(self) -> PackBase:
         """Returns the required reference to a pack to enable decoration
 
         Returns:
@@ -174,6 +166,11 @@ class PackFile(ABC):
         """
         return None
     
+
+    def rendering_allowed(self, pack: PackBase) -> bool:
+        if self._is_dev and not pack._build_flag.is_dev:
+            return False
+        return True
     
     
     def set_pack_parent(self, pack: PackDSL) -> None:

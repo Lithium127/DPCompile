@@ -23,9 +23,6 @@ from .plugins.dpc_plugin import PluginCollection, DPCPlugin
 
 
 
-class PackError(Exception):
-    pass
-
 class PackBuildError(PackError):
     
     file: PackFile
@@ -33,32 +30,6 @@ class PackBuildError(PackError):
     def __init__(self, file: PackFile, *args):
         self.file = file
         super().__init__(*args)
-
-
-class PackFileSystem:
-    
-    # TODO: Make tree reference a 'Buildable' or 'Renderable' interface for modules
-    tree: dict[str, list[PackFile]]
-    
-    def __init__(self):
-        self.tree = defaultdict(list)
-    
-    def register(self, path: str, item: PackFile) -> None:
-        if " " in path:
-            raise PackError(f"Invalid path for '{type(item)}'. Requested path '{path}' includes invalid characters.")
-        self.tree[path].append(item)
-    
-    def get_files(self, path: str) -> list[PackFile] | None:
-        """Returns the list of files at a given path
-        within this directory
-
-        Args:
-            path (str): The path to fileset
-
-        Returns:
-            list[PackFile]: The list of files at the given path
-        """
-        return self.tree.get(path, None)
 
 
 class PackDSL(TemplateDecoratable):
@@ -99,9 +70,9 @@ class PackDSL(TemplateDecoratable):
     def __init__(self, 
                  pack_name: str,
                  namesapce: str,
-                 description: str,
-                 version: Version | str | list[int] | tuple[int, int, int],
-                 out_dir: str, # TODO: Automatic directory loading to same location or to game.
+                 description: str = "",
+                 version: Version | str | list[int] | tuple[int, int, int] = Version.maximum(),
+                 out_dir: str = os.getcwd(), # TODO: Automatic directory loading to same location or to game.
                  *,
                  plugins: list | None = None):
         """Represents a full datapack context that loads functions and compiles to set versions.

@@ -100,4 +100,4 @@ class PluginCollection(list[DPCPlugin]):
             try:
                 plugin.__getattribute__(hook_name)(*args, **kwargs)
             except Exception as e:
-                raise DPCPluginError(f"Error running plugin hook '{hook_name}' with plugin {plugin.__class__.__name__}") from e
+                raise DPCPluginError(f"Error running plugin hook '{hook_name}' with plugin {plugin.__class__.__name__}" + f" using args [{', '.join(args)}], malformed plugin call.") from e
