@@ -7,7 +7,6 @@ from ..cmd.bases import Command, BaseCommand, get_current_pack
 from .entity import ensure_selector
 
 if t.TYPE_CHECKING:
-    from ..packdsl import PackDSL
     from .entity import Selector
 
 
@@ -119,7 +118,7 @@ class Scoreboard:
     
     _name: str
     _criteria: str
-    _registered_in: set[PackDSL]
+    _registered_in: set
     
     def __new__(cls, name: str, *args, **kwargs) -> Scoreboard:
         if name in cls._SCOREBOARD_REGISTRY:
@@ -271,7 +270,7 @@ class Scoreboard:
         self.set_value(target, 0, **kwargs)
     
     
-    def _add_to_pack_registry(self) -> PackDSL:
+    def _add_to_pack_registry(self):
         """An internal command that adds this
         scoreboard to a packs registry. This
         method is called whenever a command is

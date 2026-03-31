@@ -7,7 +7,6 @@ from pathlib import Path
 from abc import ABC, ABCMeta, abstractmethod
 
 if t.TYPE_CHECKING:
-    from ..packdsl import PackDSL
     from ..pack import PackBase
 
 class FileParentable(metaclass=ABCMeta):
@@ -141,7 +140,7 @@ class PackFile(ABC):
     def write(self, path: str | None = None) -> None:
         """Writes this file to the pack via the given directory"""
         use_path = path or self.path
-        full = os.path.join(self.pack._build_dir, use_path) if use_path != "/" else self.pack._file_root
+        full = os.path.join(self.pack._build_dir, use_path) if use_path != "/" else self.pack._build_dir
         os.makedirs(os.path.dirname(full), exist_ok=True)
         content = self.render()
         # Only write file if content exists

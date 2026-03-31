@@ -10,8 +10,6 @@ from .jsonfile import JsonFile
 from .packfile import PackFile
 from .script import is_script
 
-if t.TYPE_CHECKING:
-    from ..packdsl import PackDSL
 
 # TODO: Instance tables from the game, such as #minecraft:burnable_logs
 

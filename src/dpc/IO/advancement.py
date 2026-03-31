@@ -4,10 +4,10 @@ import typing as t
 import json
 
 from .jsonfile import JsonFile
-from ..datatypes.textelement import to_textelement
+from ..mctypes.textelement import to_textelement
 
 if t.TYPE_CHECKING:
-    from ..datatypes.textelement import TextElement
+    from ..mctypes.textelement import TextElement
 
 class AdvancementTrigger():
     pass

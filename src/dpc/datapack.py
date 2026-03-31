@@ -5,6 +5,7 @@ import os
 from .pack import PackBase, PackContext, PackBuildError
 from .IO.script import Script, ScriptDecoratable, ScriptError
 from .IO.tagtable import TagTable
+from .IO.mcmeta import McMeta
 
 if t.TYPE_CHECKING:
     from .namespace import Namespace
@@ -14,6 +15,8 @@ if t.TYPE_CHECKING:
 
 class DatapackContext(PackContext, ScriptDecoratable):
     
+    _tied_pack: Datapack
+
     def add_file(self, file, path = None):
         return self.pack.add_file(file, path or "/")
     
@@ -47,15 +50,22 @@ class DatapackContext(PackContext, ScriptDecoratable):
     @property
     def _file_root(self):
         return os.path.join(self.pack.build_dir, self.pack._pack_name)
+    
+    @property
+    def pack(self) -> Datapack:
+        return super().pack
 
 
 
 class Datapack(PackBase):
 
     _PACK_CONTEXT_TYPE = DatapackContext
+    _meta: McMeta
 
-    def __init__(self, name, nmsp, build_dir, version = ...):
-        super().__init__(name, nmsp, build_dir, version)
+    def __init__(self, name, nmsp, build_dir, version = ..., build_type = ..., desc: str = None):
+        super().__init__(name, nmsp, build_dir, version, build_type)
+        self._meta = McMeta(desc or "A datapack made with DPCompile")
+        self.add_file(self._meta, "/")
 
     def __enter__(self) -> DatapackContext:
         return super().__enter__()

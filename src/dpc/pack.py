@@ -101,9 +101,13 @@ class BuildFlag:
     _FLAG_DEV  = 0
     _FLAG_PROD = 1
 
+    FLAG_LITERAL = t.Literal["dev", "prod"]
+
     _flag: int
 
-    def __init__(self, flag: int = 0, /):
+    def __init__(self, flag: int | FLAG_LITERAL = 0, /):
+        if isinstance(flag, str):
+            flag = self._convert_string_to_index(flag)
         self._flag = flag
     
     def __eq__(self, value):
@@ -111,6 +115,15 @@ class BuildFlag:
             return False
         
         return self._flag == value._flag
+    
+    def _convert_string_to_index(self, val: str) -> int:
+        keys = {
+            "dev" : self._FLAG_DEV, 
+            "prod" : self._FLAG_PROD
+        }
+        if val not in keys:
+            raise ValueError(f"Invalid key '{val}' given to build flags. ")
+        return keys[val]
 
     @property
     def is_dev(self) -> bool:
@@ -148,7 +161,7 @@ class PackBase:
     _PACK_CONTEXT_TYPE: t.Type[PackContext] = PackContext
     """The type that context should be derived from"""
 
-    def __init__(self, name: str, nmsp: Namespace | str, build_dir: str, version: Version = None):
+    def __init__(self, name: str, nmsp: Namespace | str, build_dir: str, version: Version = None, build_type: BuildFlag.FLAG_LITERAL | int = 0):
         
         if not isinstance(nmsp, Namespace):
             nmsp = Namespace(nmsp)
@@ -164,7 +177,7 @@ class PackBase:
             self._version = version if isinstance(version, Version) else Version(version)
 
         self._build_dir = build_dir
-        self._build_flag = BuildFlag()
+        self._build_flag = BuildFlag(build_type)
 
         self._context = None
     
