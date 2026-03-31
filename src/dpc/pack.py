@@ -176,7 +176,7 @@ class PackBase:
         else: 
             self._version = version if isinstance(version, Version) else Version(version)
 
-        self._build_dir = build_dir
+        self._build_dir = os.path.join(build_dir, self._pack_name)
         self._build_flag = BuildFlag(build_type)
 
         self._context = None
